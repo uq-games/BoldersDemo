@@ -1,0 +1,126 @@
+{
+  "course": [
+    {
+      "test": "client_obstacle",
+      "passed": true,
+      "seconds": 4.610000000000582,
+      "end": [
+        1054.6575061779033,
+        -1.204587392291812,
+        91.64999580383301
+      ],
+      "client_error": 0.005221430292277891,
+      "max_speed": 300.0000000000027,
+      "max_z": 91.64999580383301
+    },
+    {
+      "test": "ramp_up",
+      "passed": true,
+      "seconds": 9.235000000000582,
+      "end": [
+        150.45332049146143,
+        -993.6630162977756,
+        292.09298458652245
+      ],
+      "client_error": 0.005388086165445463,
+      "max_speed": 300.00000000000193,
+      "max_z": 292.09298458652245
+    },
+    {
+      "test": "ramp_down",
+      "passed": true,
+      "seconds": 3.610000000000582,
+      "end": [
+        -754.0525061126275,
+        -999.6936530036302,
+        91.64999516682414
+      ],
+      "client_error": 0.0044300179889726465,
+      "max_speed": 300.0000000000015,
+      "max_z": 292.09298458652245
+    },
+    {
+      "test": "stairs_up",
+      "passed": true,
+      "seconds": 8.796999999998661,
+      "end": [
+        116.90606657287377,
+        844.1763559015933,
+        251.98888241513407
+      ],
+      "client_error": 0.005477252786581656,
+      "max_speed": 300.0000089406964,
+      "max_z": 251.98888241513407
+    },
+    {
+      "test": "stairs_down",
+      "passed": true,
+      "seconds": 3.4690000000045984,
+      "end": [
+        -752.1385483601115,
+        849.6960124155075,
+        91.64999520047343
+      ],
+      "client_error": 0.004243596527265399,
+      "max_speed": 300.0000000000021,
+      "max_z": 251.98888241513407
+    },
+    {
+      "test": "high_steps_rejected",
+      "passed": true,
+      "seconds": 1.5619999999980791,
+      "end": [
+        -752.1385483601115,
+        849.6960124155075,
+        91.64999520047343
+      ],
+      "client_error": 0.004243596527265399,
+      "max_speed": 0.0,
+      "max_z": 91.64999520047343
+    },
+    {
+      "test": "wrong_owner_rejected",
+      "passed": true,
+      "seconds": 1.5160000000032596,
+      "end": [
+        -752.1385483601115,
+        849.6960124155075,
+        91.64999520047343
+      ],
+      "client_error": 0.004243596527265399,
+      "max_speed": 0.0,
+      "max_z": 91.64999520047343
+    }
+  ],
+  "additional": {
+    "redirect_distance": 46.19871539177812,
+    "stopped": true,
+    "client_camera_distance": 1174.0418266626098,
+    "server_camera_distance": 0.0
+  },
+  "logout": [
+    {
+      "world": "/Game/BoldersDemo/Assets/Maps/UEDPIE_0_TestMap.TestMap",
+      "warriors": 1,
+      "ai_controllers": 1
+    }
+  ],
+  "manual_input": "Client window: left click owned warrior, then ground; selection and server request/completion verified in log.",
+  "scope": "Two-player listen-server PIE on one machine; no packet-loss simulation or packaged build.",
+  "reloaded": {
+    "assets": {
+      "/Game/BoldersDemo/Blueprints/Characters/Warrior/BP_Warrior": "<BlueprintStatus.BS_UP_TO_DATE: 3>",
+      "/Game/BoldersDemo/Blueprints/Characters/Warrior/ABP_Warrior": "<BlueprintStatus.BS_UP_TO_DATE: 3>",
+      "/Game/BoldersDemo/Blueprints/Player/BP_BoldersPlayerController": "<BlueprintStatus.BS_UP_TO_DATE: 3>",
+      "/Game/BoldersDemo/Blueprints/Shared/BP_BoldersGameMode": "<BlueprintStatus.BS_UP_TO_DATE: 3>"
+    },
+    "navigation": {
+      "(0, 250, 0)": "<Struct 'Vector' (0x0000025D35772C28) {x: 0.000000, y: 250.000000, z: 0.000000}>",
+      "(200, -1000, 200)": "<Struct 'Vector' (0x0000025D35771148) {x: 200.000000, y: -1000.000000, z: 210.000000}>",
+      "(160, 850, 160)": "<Struct 'Vector' (0x0000025D357737B8) {x: 160.000000, y: 850.000000, z: 170.000000}>"
+    },
+    "max_step_height": 45.0,
+    "walkable_floor_angle": 44.76508331298828
+  },
+  "build": "BoldersDemoEditor Win64 Development: Succeeded"
+}

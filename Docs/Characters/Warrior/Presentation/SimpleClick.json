@@ -1,0 +1,10 @@
+{
+  "target": [
+    200,
+    -500,
+    0
+  ],
+  "position": "<Struct 'Vector' (0x0000022C31214C98) {x: 53.629608, y: -317.037010, z: 91.649996}>",
+  "speed": 205.9042833052185,
+  "hud_niagara_components": 0
+}

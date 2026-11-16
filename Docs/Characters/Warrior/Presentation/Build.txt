@@ -1,0 +1,152 @@
+Log started at 11/16/2026 20:57:44 (2026-11-16T12:57:44Z)
+Resolved project argument H:/UE5/Unreal Projects/BoldersDemo/BoldersDemo.uproject to H:\UE5\Unreal Projects\BoldersDemo\BoldersDemo.uproject
+No config file at C:\ProgramData\Unreal Engine\UnrealBuildTool\BuildConfiguration.xml
+No config file at C:\Users\liuzhichong\AppData\Local\Unreal Engine\UnrealBuildTool\BuildConfiguration.xml
+No config file at C:\Users\liuzhichong\Documents\Unreal Engine\UnrealBuildTool\BuildConfiguration.xml
+Configuration will be read from:
+  C:\Users\liuzhichong\AppData\Roaming\Unreal Engine\UnrealBuildTool\BuildConfiguration.xml
+Reading configuration file from cache (H:\UE5\Unreal Projects\BoldersDemo\Intermediate\Build\XmlConfigCache.bin): C:\Users\liuzhichong\AppData\Roaming\Unreal Engine\UnrealBuildTool\BuildConfiguration.xml
+Reading configuration file from cache (H:\UE5\Unreal Projects\BoldersDemo\Intermediate\Build\XmlConfigCache.bin): H:\UE5\Unreal Projects\BoldersDemo\Saved\UnrealBuildTool\BuildConfiguration.xml
+Reading configuration file from cache (H:\UE5\Unreal Projects\BoldersDemo\Intermediate\Build\XmlConfigCache.bin): C:\Users\liuzhichong\AppData\Local\UnrealEngine\Intermediate\Build\UnrealBuildTool.Env.BuildConfiguration.xml
+Log file: C:\Users\liuzhichong\AppData\Local\UnrealBuildTool\Log.txt
+
+Deleting old log file: C:\Users\liuzhichong\AppData\Local\UnrealBuildTool\Log-backup-2024.10.20-14.38.16.txt
+Deleting old log file: C:\Users\liuzhichong\AppData\Local\UnrealBuildTool\Log-backup-2024.10.20-14.38.16.json
+Setting temp directory to 'D:\Temp\UnrealBuildTool\3f423c9d'
+    Registering build platform: UnrealBuildTool.AndroidPlatformFactory
+    Registering build platform: UnrealBuildTool.IOSPlatformFactory
+    Registering build platform: UnrealBuildTool.LinuxPlatformFactory
+    Registering build platform: UnrealBuildTool.MacPlatformFactory
+    Registering build platform: UnrealBuildTool.TVOSPlatformFactory
+    Registering build platform: UnrealBuildTool.WindowsPlatformFactory
+Found Windows 10 SDK root at C:\Program Files (x86)\Windows Kits\10 (1)
+Found Windows 10 SDK root at C:\Program Files (x86)\Windows Kits\10 (2)
+Found Windows 10 SDK version 10.0.22621.0 at C:\Program Files (x86)\Windows Kits\10
+Found Universal CRT version 10.0.22621.0 at C:\Program Files (x86)\Windows Kits\10
+Found Windows 10 SDK version 10.0.26100.0 at C:\Program Files (x86)\Windows Kits\10
+Found Universal CRT version 10.0.26100.0 at C:\Program Files (x86)\Windows Kits\10
+Win64 Installed SDK(s): MinVersion_Sdk=10.0.22621.0, MaxVersion_Sdk=10.9.99999.0, CurrentVersion_Sdk=10.0.26100.0, Version_AutoSdk=10.0.26100.0, CurrentVersion_AutoSdk=
+        Registering build platform: Win64 - buildable: True
+    Registering build platform: UnrealBuildTool.VisionOSPlatformFactory
+    Registering build platform: UnrealBuildTool.WasmPlatformFactory
+Wasm emsdk: G:\Program Files\Epic Games\UE_5.9\Engine\Platforms\Wasm\NoEmsdk (none found; not an AutoSDK folder)
+Wasm needs emscripten 6.0.10 (emsdk). Set WASM_EMSDK_ROOT (or EMSDK) to an emsdk folder with 'emsdk install 6.0.10' and 'emsdk activate 6.0.10' done, or place it at $(UE_SDKS_ROOT)/HostWin64/Wasm/6.0.10 (or its Emscripten subfolder). Looked at: G:\Program Files\Epic Games\UE_5.9\Engine\Platforms\Wasm\NoEmsdk (installed version: none)
+Unable to find valid SDK(s) for Wasm:
+  Found Sdk Version, Required=6.0.10.
+  Found AutoSdk Version, Required=6.0.10.
+Wasm needs emscripten 6.0.10 (emsdk). Set WASM_EMSDK_ROOT (or EMSDK) to an emsdk folder with 'emsdk install 6.0.10' and 'emsdk activate 6.0.10' done, or place it at $(UE_SDKS_ROOT)/HostWin64/Wasm/6.0.10 (or its Emscripten subfolder). Looked at: G:\Program Files\Epic Games\UE_5.9\Engine\Platforms\Wasm\NoEmsdk (installed version: none)
+        Registering build platform: Wasm - buildable: False
+Command line: "G:\Program Files\Epic Games\UE_5.9\Engine\Binaries\DotNET\UnrealBuildTool\UnrealBuildTool.dll" BoldersDemoEditor Win64 Development "-Project=H:/UE5/Unreal Projects/BoldersDemo/BoldersDemo.uproject" -WaitMutex -NoHotReloadFromIDE
+Executing up to 20000 actions based on MaxProcessorCount override
+Using 'git status' to determine working set for adaptive non-unity build (H:\UE5\Unreal Projects\BoldersDemo).
+UbaStorageServer - Database loaded from C:\ProgramData\Epic\UnrealBuildAccelerator\cas\casdb (v32) in 2ms (contained 0 entries estimated to 0b/42.9gb, 0/0 files)
+UbaServer - Listening on 0.0.0.0:1345
+Skipping G:\Program Files\Epic Games\UE_5.9\Engine\Intermediate\Build\BuildRules\UE5Rules.dll: File is installed
+Skipping G:\Program Files\Epic Games\UE_5.9\Engine\Intermediate\Build\BuildRules\UE5ProgramRules.dll: File is installed
+Building UnrealEditor - BoldersDemoEditor - Win64 - Development
+Warning: Plugin 'Fab' does not list plugin 'ToolsetRegistry' as a dependency, but module 'FabToolset' depends on module 'ToolsetRegistry'.
+Generated code is up to date.
+Deleting outdated item: H:\UE5\Unreal Projects\BoldersDemo\Binaries\Win64\UnrealEditor-BoldersDemo.pdb
+Deleting outdated item: H:\UE5\Unreal Projects\BoldersDemo\Intermediate\Build\Win64\x64\UnrealEditor\Development\BoldersDemo\UnrealEditor-BoldersDemo.lib
+Building BoldersDemoEditor...
+===== Toolchain Information =====
+Using ISPC compiler (G:\Program Files\Epic Games\UE_5.9\Engine\Source\ThirdParty\Intel\ISPC\bin\Windows\ispc.exe)
+  Intel(r) Implicit SPMD Program Compiler (Intel(r) ISPC), 1.24.0 (build commit  @ 20250404, LLVM 18.1.2) 
+Using Visual Studio 14.44.35225 toolchain (G:\Visual Studio\VC\Tools\MSVC\14.44.35207) and Windows 10.0.26100.0 SDK (C:\Program Files (x86)\Windows Kits\10).
+[Adaptive Build] Excluded from BoldersDemo unity file: BoldersAIController.cpp, CameraPawn.cpp, BaseCharacter.cpp, KayKitEquipmentComponent.cpp, WarriorAnimInstance.cpp, WarriorCharacter.cpp, WarriorAnimationSetup.cpp, BoldersGameMode.cpp, BoldersPlayerController.cpp, BoldersHUD.cpp
+===== End Toolchain Information =====
+Using Unreal Build Accelerator local executor to run 4 action(s)
+  CPU 14 physical cores, 20 logical cores
+  Memory 31.63 GB physical, 36.85 GB/63.63 GB committed
+  UBA Storage capacity 40 GB
+  UBA RootDir C:\ProgramData\Epic\UnrealBuildAccelerator
+Cache bucket 2825579673 used. Action: Compile [x64] BoldersHUD.cpp ()
+Cache bucket 416513229 used. Action: Link [x64] UnrealEditor-BoldersDemo.dll ()
+All processes queued
+[1/4] Compile [x64] BoldersHUD.cpp
+[2/4] Link [x64] UnrealEditor-BoldersDemo.lib
+  ￕ�ￔￚﾴﾴﾽﾨ﾿￢ H:/UE5/Unreal Projects/BoldersDemo/Intermediate/Build/Win64/x64/UnrealEditor/Development/BoldersDemo/UnrealEditor-BoldersDemo.lib ﾺￍﾶￔￏ￳ H:/UE5/Unreal Projects/BoldersDemo/Intermediate/Build/Win64/x64/UnrealEditor/Development/BoldersDemo/UnrealEditor-BoldersDemo.exp
+[3/4] Link [x64] UnrealEditor-BoldersDemo.dll
+[4/4] WriteMetadata BoldersDemoEditor.target [NoUba]
+
+Total time in Unreal Build Accelerator local executor: 5.61 seconds
+Output binary: G:\Program Files\Epic Games\UE_5.9\Engine\Binaries\Win64\UnrealEditor.exe
+UbaStorageServer - Database saved in 2ms (0 file entries, 0 cas entries. deleted 0 dropped cas files)
+WriteFileIfChanged() wrote 0 changed files of 1 requested writes.
+
+Result: Succeeded
+
+Timeline:
+[  0.635]  +7.458 UnrealBuildTool
+   0.635          [  0.637]  +0.737 Main
+   0.635             0.637          [  0.679]  +0.186 XmlConfig.ReadConfigFiles()
+   0.635             0.637          [  0.874]  +0.000 FileMetadataPrefetch.QueueEngineDirectory()
+   0.635             0.637          [  0.933]  +0.194 AddTelemetry
+   0.635             0.637          [  1.227]  +0.005 SingleInstanceMutex.Acquire()
+   0.635             0.637          [  1.233]  +0.141 RegisterPlatforms
+   0.635             0.637             1.233          [  1.233]  +0.141 UEBuildPlatform.RegisterPlatforms()
+   0.635          [  1.396]  +0.027 TargetDescriptor.ParseCommandLine()
+   0.635          [  1.505]  +0.231 RulesCompiler.CreateTargetRulesAssembly()
+   0.635             1.505          [  1.551]  +0.041 EngineRulesPlugins
+   0.635             1.505          [  1.600]  +0.006 EngineRulesFetchDirs
+   0.635             1.505          [  1.606]  +0.002 Finding engine modules
+   0.635             1.505          [  1.609]  +0.000 Finding engine modules
+   0.635             1.505          [  1.609]  +0.000 Finding engine modules
+   0.635             1.505          [  1.609]  +0.000 Finding engine modules
+   0.635             1.505          [  1.609]  +0.000 Finding engine modules
+   0.635             1.505          [  1.610]  +0.000 Finding engine modules
+   0.635             1.505          [  1.610]  +0.007 Finding plugin modules
+   0.635             1.505          [  1.617]  +0.018 EngineRulesAssembly
+   0.635             1.505          [  1.635]  +0.008 ProgramRulesAssembly
+   0.635             1.505             1.635          [  1.635]  +0.000 Finding program modules
+   0.635             1.505             1.635          [  1.636]  +0.000 Finding program targets
+   0.635             1.505             1.635          [  1.636]  +0.000 Finding program modules
+   0.635             1.505             1.635          [  1.636]  +0.000 Finding program targets
+   0.635             1.505             1.635          [  1.636]  +0.000 Finding program modules
+   0.635             1.505             1.635          [  1.636]  +0.000 Finding program targets
+   0.635             1.505             1.635          [  1.636]  +0.000 Finding program modules
+   0.635             1.505             1.635          [  1.636]  +0.000 Finding program targets
+   0.635             1.505             1.635          [  1.636]  +0.000 Finding program modules
+   0.635             1.505             1.635          [  1.636]  +0.000 Finding program targets
+   0.635             1.505             1.635          [  1.636]  +0.000 Finding program modules
+   0.635             1.505             1.635          [  1.636]  +0.000 Finding program targets
+   0.635             1.505          [  1.647]  +0.000 Finding marketplace plugin modules
+   0.635             1.505          [  1.675]  +0.061 ProjectRulesAssembly
+   0.635          [  1.508]  +0.000 Checking dependent timestamps
+   0.635          [  1.509]  +0.158 Loading makefile
+   0.635          [  1.541]  +0.093 Reading source file metadata cache
+   0.635          [  1.668]  +0.018 Checking makefile validity
+   0.635             1.668          [  1.678]  +0.000 FindPlugins
+   0.635          [  1.697]  +0.079 TargetMakefile.IsValidForSourceFiles()
+   0.635             1.697          [  1.776]  +0.000 GitWait
+   0.635          [  1.737]  +0.297 RulesAssembly.CreateTargetRules()
+   0.635          [  2.101]  +0.005 CppDependencyCache
+   0.635          [  2.123]  +0.076 BoldersDemoEditor Win64 Development
+   0.635             2.123          [  2.203]  +0.041 UHTManifest
+   0.635             2.123          [  2.245]  +0.020 UHTExecution.UpdateTimestamps()
+   0.635          [  2.202]  +0.044 UHTWait
+   0.635          [  2.277]  +0.004 CppDependencyCache
+   0.635          [  2.281]  +0.091 Preparing ActionGraph
+   0.635             2.281          [  2.281]  +0.004 ActionGraph.CheckForConflicts
+   0.635             2.281          [  2.285]  +0.006 ActionGraph.CheckPathLengths
+   0.635             2.281          [  2.298]  +0.009 LinkActions
+   0.635             2.281             2.298          [  2.307]  +0.000 DetectActionGraphCycles
+   0.635             2.281          [  2.309]  +0.000 GatherPrerequisiteActions
+   0.635             2.281          [  2.310]  +0.000 Reading action history
+   0.635             2.281          [  2.312]  +0.000 CppDependencyCacheWait
+   0.635             2.281          [  2.314]  +0.037 GatherOutdatedActions
+   0.635             2.281             2.314          [  2.314]  +0.033 Cache individual outdated actions
+   0.635             2.281             2.314          [  2.348]  +0.003 Cache outdated actions based on recursive prerequisites
+   0.635             2.281          [  2.355]  +0.010 LinkActions
+   0.635             2.281             2.355          [  2.355]  +0.000 DetectActionGraphCycles
+   0.635             2.281          [  2.367]  +0.002 DeleteOutdatedProducedItems
+   0.635             2.281          [  2.369]  +0.001 SaveActionHistory
+   0.635             2.281          [  2.372]  +0.000 CreateDirectoriesForProducedItems
+   0.635          [  2.383]  +5.615 ActionGraph.ExecuteActions()
+   0.635             2.383          [  2.390]  +0.164 GarbageCollect
+   0.635          [  7.999]  +0.000 Deploying targets
+   0.635          [  8.001]  +0.000 DisconnectCache
+   0.635          [  8.005]  +0.018 SaveCasTable
+   0.635          [  8.027]  +0.060 Saving caches
+   0.635          [  8.088]  +0.000 FileMetadataPrefetch.Stop()
+   0.635          [  8.089]  +0.003 TelemetryService.FlushEvents

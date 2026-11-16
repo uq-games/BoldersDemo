@@ -1,0 +1,26 @@
+[
+  {
+    "actor": "BossPreview_Stomp",
+    "socket": "AxeGrip",
+    "parent": "SkeletalMeshComponent0"
+  },
+  {
+    "actor": "BossPreview_Idle",
+    "socket": "AxeGrip",
+    "parent": "SkeletalMeshComponent0"
+  },
+  {
+    "actor": "BossPreview_Walk",
+    "socket": "AxeGrip",
+    "parent": "SkeletalMeshComponent0"
+  },
+  {
+    "actor": "BossPreview_GroundAttack",
+    "socket": "AxeGrip",
+    "parent": "SkeletalMeshComponent0"
+  },
+  {
+    "new_spawn_socket": "AxeGrip",
+    "mesh": "/Game/BoldersDemo/Assets/Characters/StatueBoss/SM_StatueBoss_Axe.SM_StatueBoss_Axe"
+  }
+]

@@ -1,0 +1,46 @@
+[
+  {
+    "actor": "BossPreview_Stomp",
+    "time": 1.6438740491867065,
+    "playing": true,
+    "attachment_error_cm": 0.0,
+    "axe_position": [
+      1084.0020929326342,
+      18.587814139979066,
+      297.74312864402
+    ]
+  },
+  {
+    "actor": "BossPreview_Idle",
+    "time": 1.6438921689987183,
+    "playing": true,
+    "attachment_error_cm": 0.0,
+    "axe_position": [
+      -1296.50325091224,
+      18.307457807551913,
+      285.2380556233303
+    ]
+  },
+  {
+    "actor": "BossPreview_Walk",
+    "time": 0.4438815116882324,
+    "playing": true,
+    "attachment_error_cm": 0.0,
+    "axe_position": [
+      -498.3629947504704,
+      19.526149370897244,
+      280.2116876799839
+    ]
+  },
+  {
+    "actor": "BossPreview_GroundAttack",
+    "time": 0.4438815116882324,
+    "playing": true,
+    "attachment_error_cm": 0.0,
+    "axe_position": [
+      284.99758129859504,
+      -0.003937423356298098,
+      300.9242210080084
+    ]
+  }
+]

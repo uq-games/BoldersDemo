@@ -12,6 +12,9 @@
 ACameraPawn::ACameraPawn()
 {
 	PrimaryActorTick.bCanEverTick = false;
+	bReplicates = true;
+	bOnlyRelevantToOwner = true;
+	SetReplicateMovement(false);
 	bUseControllerRotationPitch = false;
 	bUseControllerRotationYaw = false;
 	bUseControllerRotationRoll = false;
@@ -78,6 +81,7 @@ void ACameraPawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponen
 
 void ACameraPawn::HandleCameraMove(const FInputActionValue& Value)
 {
+	if (!IsLocallyControlled()) return;
 	const FVector2D MoveInput = Value.Get<FVector2D>();
 	const FRotator YawRotation(0.0f, SpringArm->GetComponentRotation().Yaw, 0.0f);
 	const FVector Forward = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
@@ -89,6 +93,7 @@ void ACameraPawn::HandleCameraMove(const FInputActionValue& Value)
 
 void ACameraPawn::HandleCameraRotate(const FInputActionValue& Value)
 {
+	if (!IsLocallyControlled()) return;
 	const float YawDelta = Value.Get<float>() * RotationSpeed * GetWorld()->GetDeltaSeconds();
 	FRotator Rotation = SpringArm->GetRelativeRotation();
 	Rotation.Yaw += YawDelta;
@@ -97,6 +102,7 @@ void ACameraPawn::HandleCameraRotate(const FInputActionValue& Value)
 
 void ACameraPawn::HandleCameraZoom(const FInputActionValue& Value)
 {
+	if (!IsLocallyControlled()) return;
 	const float NewLength = SpringArm->TargetArmLength - Value.Get<float>() * ZoomStep;
 	SpringArm->TargetArmLength = FMath::Clamp(NewLength, MinArmLength, FMath::Max(MinArmLength, MaxArmLength));
 }

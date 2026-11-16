@@ -1,0 +1,208 @@
+Log started at 11/16/2026 21:56:36 (2026-11-16T13:56:36Z)
+Resolved project argument H:/UE5/Unreal Projects/BoldersDemo/BoldersDemo.uproject to H:\UE5\Unreal Projects\BoldersDemo\BoldersDemo.uproject
+No config file at C:\ProgramData\Unreal Engine\UnrealBuildTool\BuildConfiguration.xml
+No config file at C:\Users\liuzhichong\AppData\Local\Unreal Engine\UnrealBuildTool\BuildConfiguration.xml
+No config file at C:\Users\liuzhichong\Documents\Unreal Engine\UnrealBuildTool\BuildConfiguration.xml
+Configuration will be read from:
+  C:\Users\liuzhichong\AppData\Roaming\Unreal Engine\UnrealBuildTool\BuildConfiguration.xml
+Reading configuration file from cache (H:\UE5\Unreal Projects\BoldersDemo\Intermediate\Build\XmlConfigCache.bin): C:\Users\liuzhichong\AppData\Roaming\Unreal Engine\UnrealBuildTool\BuildConfiguration.xml
+Reading configuration file from cache (H:\UE5\Unreal Projects\BoldersDemo\Intermediate\Build\XmlConfigCache.bin): H:\UE5\Unreal Projects\BoldersDemo\Saved\UnrealBuildTool\BuildConfiguration.xml
+Reading configuration file from cache (H:\UE5\Unreal Projects\BoldersDemo\Intermediate\Build\XmlConfigCache.bin): C:\Users\liuzhichong\AppData\Local\UnrealEngine\Intermediate\Build\UnrealBuildTool.Env.BuildConfiguration.xml
+Log file: C:\Users\liuzhichong\AppData\Local\UnrealBuildTool\Log.txt
+
+Deleting old log file: C:\Users\liuzhichong\AppData\Local\UnrealBuildTool\Log-backup-2024.10.20-14.38.16.txt
+Deleting old log file: C:\Users\liuzhichong\AppData\Local\UnrealBuildTool\Log-backup-2024.10.20-14.38.16.json
+Setting temp directory to 'D:\Temp\UnrealBuildTool\3f423c9d'
+    Registering build platform: UnrealBuildTool.AndroidPlatformFactory
+    Registering build platform: UnrealBuildTool.IOSPlatformFactory
+    Registering build platform: UnrealBuildTool.LinuxPlatformFactory
+    Registering build platform: UnrealBuildTool.MacPlatformFactory
+    Registering build platform: UnrealBuildTool.TVOSPlatformFactory
+    Registering build platform: UnrealBuildTool.WindowsPlatformFactory
+Found Windows 10 SDK root at C:\Program Files (x86)\Windows Kits\10 (1)
+Found Windows 10 SDK root at C:\Program Files (x86)\Windows Kits\10 (2)
+Found Windows 10 SDK version 10.0.22621.0 at C:\Program Files (x86)\Windows Kits\10
+Found Universal CRT version 10.0.22621.0 at C:\Program Files (x86)\Windows Kits\10
+Found Windows 10 SDK version 10.0.26100.0 at C:\Program Files (x86)\Windows Kits\10
+Found Universal CRT version 10.0.26100.0 at C:\Program Files (x86)\Windows Kits\10
+Win64 Installed SDK(s): MinVersion_Sdk=10.0.22621.0, MaxVersion_Sdk=10.9.99999.0, CurrentVersion_Sdk=10.0.26100.0, Version_AutoSdk=10.0.26100.0, CurrentVersion_AutoSdk=
+        Registering build platform: Win64 - buildable: True
+    Registering build platform: UnrealBuildTool.VisionOSPlatformFactory
+    Registering build platform: UnrealBuildTool.WasmPlatformFactory
+Wasm emsdk: G:\Program Files\Epic Games\UE_5.9\Engine\Platforms\Wasm\NoEmsdk (none found; not an AutoSDK folder)
+Wasm needs emscripten 6.0.10 (emsdk). Set WASM_EMSDK_ROOT (or EMSDK) to an emsdk folder with 'emsdk install 6.0.10' and 'emsdk activate 6.0.10' done, or place it at $(UE_SDKS_ROOT)/HostWin64/Wasm/6.0.10 (or its Emscripten subfolder). Looked at: G:\Program Files\Epic Games\UE_5.9\Engine\Platforms\Wasm\NoEmsdk (installed version: none)
+Unable to find valid SDK(s) for Wasm:
+  Found Sdk Version, Required=6.0.10.
+  Found AutoSdk Version, Required=6.0.10.
+Wasm needs emscripten 6.0.10 (emsdk). Set WASM_EMSDK_ROOT (or EMSDK) to an emsdk folder with 'emsdk install 6.0.10' and 'emsdk activate 6.0.10' done, or place it at $(UE_SDKS_ROOT)/HostWin64/Wasm/6.0.10 (or its Emscripten subfolder). Looked at: G:\Program Files\Epic Games\UE_5.9\Engine\Platforms\Wasm\NoEmsdk (installed version: none)
+        Registering build platform: Wasm - buildable: False
+Command line: "G:\Program Files\Epic Games\UE_5.9\Engine\Binaries\DotNET\UnrealBuildTool\UnrealBuildTool.dll" BoldersDemoEditor Win64 Development "-Project=H:/UE5/Unreal Projects/BoldersDemo/BoldersDemo.uproject" -WaitMutex -NoHotReloadFromIDE
+Executing up to 20000 actions based on MaxProcessorCount override
+Using 'git status' to determine working set for adaptive non-unity build (H:\UE5\Unreal Projects\BoldersDemo).
+UbaStorageServer - Database loaded from C:\ProgramData\Epic\UnrealBuildAccelerator\cas\casdb (v32) in 1ms (contained 0 entries estimated to 0b/42.9gb, 0/0 files)
+UbaServer - Listening on 0.0.0.0:1345
+Skipping G:\Program Files\Epic Games\UE_5.9\Engine\Intermediate\Build\BuildRules\UE5Rules.dll: File is installed
+Skipping G:\Program Files\Epic Games\UE_5.9\Engine\Intermediate\Build\BuildRules\UE5ProgramRules.dll: File is installed
+Invalidating makefile for BoldersDemoEditor (source file removed)
+Compiler: G:\Visual Studio\VC\Tools\MSVC\14.44.35207\bin\Hostx64\x64\cl.exe
+Linker: G:\Visual Studio\VC\Tools\MSVC\14.44.35207\bin\Hostx64\x64\link.exe
+Library Manager: G:\Visual Studio\VC\Tools\MSVC\14.44.35207\bin\Hostx64\x64\link.exe
+Resource Compiler: C:\Program Files (x86)\Windows Kits\10\bin\10.0.26100.0\x64\rc.exe
+Resource Converter: G:\Visual Studio\VC\Tools\MSVC\14.44.35207\bin\Hostx64\x64\cvtres.exe
+Using EngineIncludeOrderVersion.Unreal5_9 for target BoldersDemoEditor.Target.cs
+Building UnrealEditor - BoldersDemoEditor - Win64 - Development
+Warning: Plugin 'Fab' does not list plugin 'ToolsetRegistry' as a dependency, but module 'FabToolset' depends on module 'ToolsetRegistry'.
+VerseVMBytecodeGenerator.Generate, generating CPP headers in: 'G:\Program Files\Epic Games\UE_5.9\Engine\Intermediate\Build\Win64\UnrealEditor\Inc\CoreUObject\VerseVMBytecode'
+	Writing out generated header file. Changed:False Path:'G:\Program Files\Epic Games\UE_5.9\Engine\Intermediate\Build\Win64\UnrealEditor\Inc\CoreUObject\VerseVMBytecode\VVMBytecodeOps.gen.h'
+	Writing out generated header file. Changed:False Path:'G:\Program Files\Epic Games\UE_5.9\Engine\Intermediate\Build\Win64\UnrealEditor\Inc\CoreUObject\VerseVMBytecode\VVMBytecodesAndCaptures.gen.h'
+	Writing out generated header file. Changed:False Path:'G:\Program Files\Epic Games\UE_5.9\Engine\Intermediate\Build\Win64\UnrealEditor\Inc\CoreUObject\VerseVMBytecode\VVMMakeCapturesFuncs.gen.h'
+	Writing out generated header file. Changed:False Path:'G:\Program Files\Epic Games\UE_5.9\Engine\Intermediate\Build\Win64\UnrealEditor\Inc\CoreUObject\VerseVMBytecode\VVMCaptureSwitch.gen.h'
+UnrealHeaderTool needs to run because SavedTimestamp is older than the rules file (H:\UE5\Unreal Projects\BoldersDemo\Source\BoldersDemo\BoldersDemo.Build.cs) for module BoldersDemo
+Found 5 shared PCH headers (listed in order of preference):
+	UnrealEd
+	Engine
+	Slate
+	CoreUObject
+	Core
+Parsing headers for BoldersDemoEditor
+  Running Internal UnrealHeaderTool "H:\UE5\Unreal Projects\BoldersDemo\BoldersDemo.uproject" "H:\UE5\Unreal Projects\BoldersDemo\Intermediate\Build\Win64\BoldersDemoEditor\BoldersDemoEditor.uhtmanifest" -WarningsAsErrors -installed
+Updating H:\UE5\Unreal Projects\BoldersDemo\Intermediate\Build\Win64\x64\UnrealEditor\Development\BoldersDemo\Definitions.BoldersDemo.h: contents have changed. Saving previous version to H:\UE5\Unreal Projects\BoldersDemo\Intermediate\Build\Win64\x64\UnrealEditor\Development\BoldersDemo\Definitions.BoldersDemo.h.old.
+Updating H:\UE5\Unreal Projects\BoldersDemo\Intermediate\Build\Win64\x64\UnrealEditor\Development\BoldersDemo\BoldersDemo.Shared.rsp: contents have changed. Saving previous version to H:\UE5\Unreal Projects\BoldersDemo\Intermediate\Build\Win64\x64\UnrealEditor\Development\BoldersDemo\BoldersDemo.Shared.rsp.old.
+UHT compiled-in object format Default
+Step - Parse Headers
+Updating H:\UE5\Unreal Projects\BoldersDemo\Intermediate\Build\Win64\x64\UnrealEditor\Development\BoldersDemo\UnrealEditor-BoldersDemo.dll.rsp: contents have changed. Saving previous version to H:\UE5\Unreal Projects\BoldersDemo\Intermediate\Build\Win64\x64\UnrealEditor\Development\BoldersDemo\UnrealEditor-BoldersDemo.dll.rsp.old.
+Updating H:\UE5\Unreal Projects\BoldersDemo\Intermediate\Build\Win64\x64\UnrealEditor\Development\BoldersDemo\UnrealEditor-BoldersDemo.lib.rsp: contents have changed. Saving previous version to H:\UE5\Unreal Projects\BoldersDemo\Intermediate\Build\Win64\x64\UnrealEditor\Development\BoldersDemo\UnrealEditor-BoldersDemo.lib.rsp.old.
+Reading engine version from file: G:\Program Files\Epic Games\UE_5.9\Engine\Source\Runtime\Launch\Resources\Version.h
+Got engine version 5.9.0
+Step - Populate symbol table
+Step - Exports
+       Exporter Stats skipped
+       Exporter Json skipped
+       Running exporter CodeGen
+       Running exporter ClassManifest
+UHT processed BoldersDemoEditor in 5.9565191 seconds (5 generated files written)
+Deleting outdated item: H:\UE5\Unreal Projects\BoldersDemo\Binaries\Win64\UnrealEditor-BoldersDemo.pdb
+Deleting outdated item: H:\UE5\Unreal Projects\BoldersDemo\Intermediate\Build\Win64\x64\UnrealEditor\Development\BoldersDemo\UnrealEditor-BoldersDemo.lib
+Building BoldersDemoEditor...
+===== Toolchain Information =====
+Using ISPC compiler (G:\Program Files\Epic Games\UE_5.9\Engine\Source\ThirdParty\Intel\ISPC\bin\Windows\ispc.exe)
+  Intel(r) Implicit SPMD Program Compiler (Intel(r) ISPC), 1.24.0 (build commit  @ 20250404, LLVM 18.1.2) 
+Using Visual Studio 14.44.35225 toolchain (G:\Visual Studio\VC\Tools\MSVC\14.44.35207) and Windows 10.0.26100.0 SDK (C:\Program Files (x86)\Windows Kits\10).
+[Adaptive Build] Excluded from BoldersDemo unity file: BoldersAIController.cpp, CameraPawn.cpp, BaseCharacter.cpp, KayKitEquipmentComponent.cpp, WarriorAnimInstance.cpp, WarriorCharacter.cpp, WarriorAnimationSetup.cpp, BoldersGameMode.cpp, BoldersPlayerController.cpp, BoldersHUD.cpp
+===== End Toolchain Information =====
+Using Unreal Build Accelerator local executor to run 16 action(s)
+  CPU 14 physical cores, 20 logical cores
+  Memory 31.63 GB physical, 38.8 GB/63.63 GB committed
+  UBA Storage capacity 40 GB
+  UBA RootDir C:\ProgramData\Epic\UnrealBuildAccelerator
+Cache bucket 2825579673 used. Action: Compile [x64] BaseCharacter.cpp ()
+Cache bucket 2299743094 used. Action: Compile [x64] Module.BoldersDemo.gen.cpp ()
+Cache bucket 416513229 used. Action: Link [x64] UnrealEditor-BoldersDemo.dll ()
+All processes queued
+[1/16] Compile [x64] BoldersDemo.cpp
+[2/16] Compile [x64] BoldersAIController.cpp
+[3/16] Compile [x64] BoldersHUD.cpp
+[4/16] Compile [x64] BaseCharacter.cpp
+[5/16] Compile [x64] BoldersGameMode.cpp
+[6/16] Compile [x64] PerModuleInline.gen.cpp
+[7/16] Compile [x64] KayKitEquipmentComponent.cpp
+[8/16] Compile [x64] CameraPawn.cpp
+[9/16] Compile [x64] Module.BoldersDemo.gen.cpp
+[10/16] Compile [x64] WarriorAnimInstance.cpp
+[11/16] Compile [x64] WarriorCharacter.cpp
+[12/16] Compile [x64] WarriorAnimationSetup.cpp
+[13/16] Compile [x64] BoldersPlayerController.cpp
+[14/16] Link [x64] UnrealEditor-BoldersDemo.lib
+  ￕ�ￔￚﾴﾴﾽﾨ﾿￢ H:/UE5/Unreal Projects/BoldersDemo/Intermediate/Build/Win64/x64/UnrealEditor/Development/BoldersDemo/UnrealEditor-BoldersDemo.lib ﾺￍﾶￔￏ￳ H:/UE5/Unreal Projects/BoldersDemo/Intermediate/Build/Win64/x64/UnrealEditor/Development/BoldersDemo/UnrealEditor-BoldersDemo.exp
+[15/16] Link [x64] UnrealEditor-BoldersDemo.dll
+[16/16] WriteMetadata BoldersDemoEditor.target [NoUba]
+
+Total time in Unreal Build Accelerator local executor: 16.39 seconds
+Output binary: G:\Program Files\Epic Games\UE_5.9\Engine\Binaries\Win64\UnrealEditor.exe
+UbaStorageServer - Database saved in 4ms (0 file entries, 0 cas entries. deleted 0 dropped cas files)
+WriteFileIfChanged() wrote 0 changed files of 1 requested writes.
+
+Result: Succeeded
+
+Timeline:
+[  0.435] +25.316 UnrealBuildTool
+   0.435          [  0.437]  +0.636 Main
+   0.435             0.437          [  0.466]  +0.134 XmlConfig.ReadConfigFiles()
+   0.435             0.437          [  0.609]  +0.001 FileMetadataPrefetch.QueueEngineDirectory()
+   0.435             0.437          [  0.673]  +0.239 AddTelemetry
+   0.435             0.437          [  0.939]  +0.000 SingleInstanceMutex.Acquire()
+   0.435             0.437          [  0.939]  +0.134 RegisterPlatforms
+   0.435             0.437             0.939          [  0.939]  +0.134 UEBuildPlatform.RegisterPlatforms()
+   0.435          [  1.097]  +0.029 TargetDescriptor.ParseCommandLine()
+   0.435          [  1.201]  +0.156 RulesCompiler.CreateTargetRulesAssembly()
+   0.435             1.201          [  1.248]  +0.042 EngineRulesPlugins
+   0.435             1.201          [  1.297]  +0.005 EngineRulesFetchDirs
+   0.435             1.201          [  1.303]  +0.002 Finding engine modules
+   0.435             1.201          [  1.305]  +0.000 Finding engine modules
+   0.435             1.201          [  1.305]  +0.000 Finding engine modules
+   0.435             1.201          [  1.305]  +0.000 Finding engine modules
+   0.435             1.201          [  1.305]  +0.000 Finding engine modules
+   0.435             1.201          [  1.305]  +0.000 Finding engine modules
+   0.435             1.201          [  1.306]  +0.007 Finding plugin modules
+   0.435             1.201          [  1.313]  +0.017 EngineRulesAssembly
+   0.435             1.201          [  1.330]  +0.006 ProgramRulesAssembly
+   0.435             1.201             1.330          [  1.330]  +0.000 Finding program modules
+   0.435             1.201             1.330          [  1.331]  +0.000 Finding program targets
+   0.435             1.201             1.330          [  1.331]  +0.000 Finding program modules
+   0.435             1.201             1.330          [  1.331]  +0.000 Finding program targets
+   0.435             1.201             1.330          [  1.331]  +0.000 Finding program modules
+   0.435             1.201             1.330          [  1.331]  +0.000 Finding program targets
+   0.435             1.201             1.330          [  1.331]  +0.000 Finding program modules
+   0.435             1.201             1.330          [  1.331]  +0.000 Finding program targets
+   0.435             1.201             1.330          [  1.331]  +0.000 Finding program modules
+   0.435             1.201             1.330          [  1.331]  +0.000 Finding program targets
+   0.435             1.201             1.330          [  1.331]  +0.000 Finding program modules
+   0.435             1.201             1.330          [  1.331]  +0.000 Finding program targets
+   0.435             1.201          [  1.339]  +0.000 Finding marketplace plugin modules
+   0.435             1.201          [  1.352]  +0.006 ProjectRulesAssembly
+   0.435          [  1.203]  +0.000 Checking dependent timestamps
+   0.435          [  1.204]  +0.138 Loading makefile
+   0.435          [  1.220]  +0.090 Reading source file metadata cache
+   0.435          [  1.343]  +0.014 Checking makefile validity
+   0.435             1.343          [  1.354]  +0.000 FindPlugins
+   0.435          [  1.358]  +0.322 RulesAssembly.CreateTargetRules()
+   0.435          [  1.372]  +0.049 TargetMakefile.IsValidForSourceFiles()
+   0.435          [  1.736]  +0.005 CppDependencyCache
+   0.435          [  1.755]  +4.069 BoldersDemoEditor Win64 Development
+   0.435             1.755          [  2.112]  +0.011 UEBuildTarget.PreBuildSetup().ValidatePlugins
+   0.435             1.755          [  2.124]  +0.047 UEBuildTarget.PreBuildSetup().ValidateModules
+   0.435             1.755          [  2.428]  +0.072 UHTExecution.SetupUObjectModules()
+   0.435             1.755          [  2.641]  +0.213 UHTManifest
+   0.435             1.755          [  2.854]  +5.962 Executing UnrealHeaderTool
+   0.435             1.755          [  2.944]  +0.229 UEBuildBinary.Build()
+   0.435             1.755             2.944          [  3.042]  +0.000 GitWait
+   0.435             1.755          [  3.174]  +0.000 CacheInlineGenCppData
+   0.435             1.755          [  5.720]  +0.000 WaitOnWrites
+   0.435             1.755          [  5.827]  +0.210 SavingMakefile
+   0.435             1.755          [  8.821]  +0.050 UHTExecution.UpdateTimestamps()
+   0.435          [  5.832]  +2.989 UHTWait
+   0.435          [  8.894]  +0.012 CppDependencyCache
+   0.435          [  8.907]  +0.200 Preparing ActionGraph
+   0.435             8.907          [  8.907]  +0.008 ActionGraph.CheckForConflicts
+   0.435             8.907          [  8.916]  +0.025 ActionGraph.CheckPathLengths
+   0.435             8.907          [  8.953]  +0.026 LinkActions
+   0.435             8.907             8.953          [  8.979]  +0.000 DetectActionGraphCycles
+   0.435             8.907          [  8.989]  +0.000 GatherPrerequisiteActions
+   0.435             8.907          [  8.995]  +0.001 Reading action history
+   0.435             8.907          [  9.003]  +0.000 CppDependencyCacheWait
+   0.435             8.907          [  9.013]  +0.066 GatherOutdatedActions
+   0.435             8.907             9.013          [  9.013]  +0.064 Cache individual outdated actions
+   0.435             8.907             9.013          [  9.078]  +0.001 Cache outdated actions based on recursive prerequisites
+   0.435             8.907          [  9.085]  +0.006 LinkActions
+   0.435             8.907             9.085          [  9.085]  +0.000 DetectActionGraphCycles
+   0.435             8.907          [  9.094]  +0.003 DeleteOutdatedProducedItems
+   0.435             8.907          [  9.098]  +0.006 SaveActionHistory
+   0.435             8.907          [  9.107]  +0.000 CreateDirectoriesForProducedItems
+   0.435          [  9.122] +16.402 ActionGraph.ExecuteActions()
+   0.435             9.122          [  9.133]  +0.303 GarbageCollect
+   0.435          [ 25.526]  +0.000 Deploying targets
+   0.435          [ 25.531]  +0.000 DisconnectCache
+   0.435          [ 25.539]  +0.037 SaveCasTable
+   0.435          [ 25.583]  +0.160 Saving caches
+   0.435          [ 25.743]  +0.001 FileMetadataPrefetch.Stop()
+   0.435          [ 25.745]  +0.004 TelemetryService.FlushEvents
