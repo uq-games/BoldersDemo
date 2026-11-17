@@ -8,4 +8,6 @@ UCLASS()
 class BOLDERSDEMO_API AWarriorCharacter : public ABaseCharacter
 {
 	GENERATED_BODY()
+public:
+	AWarriorCharacter();
 };

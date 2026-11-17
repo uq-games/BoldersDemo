@@ -24,6 +24,7 @@ BoldersDemo/
 │  │  │  └─ Shared/                 # 多个功能共用的非蓝图资产
 │  │  └─ Blueprints/                # 项目自有蓝图，按功能细分
 │  │     ├─ Characters/             # 角色及动画蓝图
+│  │     ├─ Abilities/              # Gameplay Ability 蓝图
 │  │     ├─ Combat/                 # 战斗逻辑蓝图
 │  │     ├─ UI/                     # 控件蓝图
 │  │     └─ Shared/                 # 多个功能共用的蓝图
@@ -48,7 +49,8 @@ BoldersDemo/
 | 新内容 | 建议位置 | 说明 |
 | --- | --- | --- |
 | 角色蓝图 `BP_Hero`、动画蓝图 `ABP_Hero` | `Content/BoldersDemo/Blueprints/Characters/Hero/` | 按角色或功能细分 |
-| 项目战斗蓝图 | `Content/BoldersDemo/Blueprints/Combat/` | 再按需要细分，例如 `Abilities`、`Turns` |
+| Gameplay Ability 蓝图 | `Content/BoldersDemo/Blueprints/Abilities/` | 例如 `GA_BasicAttack` |
+| 项目战斗蓝图 | `Content/BoldersDemo/Blueprints/Combat/` | 再按需要细分，例如 `Turns` |
 | UI 控件蓝图 `WBP_...` | `Content/BoldersDemo/Blueprints/UI/` | UI 专属非蓝图素材放 `Assets/UI/` |
 | 自建角色模型、动画序列、材质实例与角色专属数据 | `Content/BoldersDemo/Assets/Characters/Hero/` | 可引用第三方资产包的内容 |
 | 项目战斗或技能数据资产 | `Content/BoldersDemo/Assets/Combat/` | 蓝图类放 `Blueprints/Combat/`；数据资产实例放这里 |

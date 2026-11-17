@@ -2,6 +2,9 @@
 #include "NiagaraFunctionLibrary.h"
 #include "Misc/ScopeExit.h"
 #include "Characters/BaseCharacter.h"
+#include "Characters/EnemyCharacter.h"
+#include "Characters/FactionRingComponent.h"
+#include "Combat/CharacterCombatComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "Engine/LocalPlayer.h"
@@ -10,6 +13,9 @@
 #include "InputMappingContext.h"
 #include "NavigationSystem.h"
 #include "Net/UnrealNetwork.h"
+#include "UI/ClassSelectionWidget.h"
+#include "UI/ClassSelectionData.h"
+#include "Game/BoldersGameMode.h"
 
 void ABoldersPlayerController::BeginPlay()
 {
@@ -29,11 +35,14 @@ void ABoldersPlayerController::BeginPlay()
 			MappingLocalPlayer = LocalPlayer;
 		}
 	}
+	OpenClassSelection();
 }
 
 void ABoldersPlayerController::EndPlay(const EEndPlayReason::Type Reason)
 {
+	CloseClassSelection();
 	UpdateHoveredCharacter(nullptr);
+	UpdateSelectedEnemy(nullptr);
 	if (ULocalPlayer* LocalPlayer = MappingLocalPlayer.Get())
 	{
 		if (auto* Subsystem = LocalPlayer->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
@@ -43,13 +52,14 @@ void ABoldersPlayerController::EndPlay(const EEndPlayReason::Type Reason)
 		}
 	}
 	MappingLocalPlayer.Reset();
-	SelectedCharacter.Reset();
+	UpdateSelectedCharacter(nullptr);
 	Super::EndPlay(Reason);
 }
 
 void ABoldersPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
+	InputComponent->BindKey(EKeys::Escape, IE_Pressed, this, &ThisClass::ClearSelection);
 	if (auto* Input = Cast<UEnhancedInputComponent>(InputComponent))
 	{
 		if (CommandClickAction)
@@ -59,18 +69,32 @@ void ABoldersPlayerController::SetupInputComponent()
 
 void ABoldersPlayerController::HandleCommandClick()
 {
+	if (IsChoosingClass()) return;
 	if (!IsLocalController()) return;
 	FHitResult Hit;
-	if (!GetHitResultUnderCursorByChannel(UEngineTypes::ConvertToTraceType(ECC_Visibility), false, Hit)) return;
+	if (!GetHitResultUnderCursorByChannel(UEngineTypes::ConvertToTraceType(ECC_Visibility), false, Hit))
+	{
+		UpdateSelectedEnemy(nullptr);
+		return;
+	}
 	if (ABaseCharacter* TargetCharacter = Cast<ABaseCharacter>(Hit.GetActor()))
 	{
 		if (TargetCharacter == AssignedCharacter && IsValid(TargetCharacter))
 		{
-			SelectedCharacter = TargetCharacter;
+			UpdateSelectedEnemy(nullptr);
+			UpdateSelectedCharacter(TargetCharacter);
 			UE_LOG(LogTemp, Log, TEXT("WarriorSelection: %s selected %s"), *GetName(), *TargetCharacter->GetName());
 		}
+		else if (CanSelectEnemy(TargetCharacter))
+		{
+			UpdateSelectedEnemy(TargetCharacter);
+			if (SelectedCharacter.IsValid() && SelectedCharacter->IsAlive())
+				ServerRequestAttack(SelectedCharacter.Get(), TargetCharacter);
+		}
+		else UpdateSelectedEnemy(nullptr);
 		return;
 	}
+	UpdateSelectedEnemy(nullptr);
 	if (SelectedCharacter.IsValid() && IsValid(Hit.GetActor()) && Hit.GetActor()->ActorHasTag(TEXT("WalkableGround")))
 		ServerRequestMove(SelectedCharacter.Get(), Hit.ImpactPoint);
 }
@@ -107,26 +131,73 @@ void ABoldersPlayerController::AssignCharacter(ABaseCharacter* TargetCharacter)
 
 void ABoldersPlayerController::OnRep_AssignedCharacter()
 {
+	if (IsLocalController() && IsValid(AssignedCharacter)) CloseClassSelection();
 	UpdateHoveredCharacter(nullptr);
-	SelectedCharacter.Reset();
+	UpdateSelectedEnemy(nullptr);
+	UpdateSelectedCharacter(nullptr);
 }
 
 void ABoldersPlayerController::PlayerTick(float DeltaSeconds)
 {
 	Super::PlayerTick(DeltaSeconds);
-	if (!IsLocalController()) return;
+	if (!IsLocalController() || IsChoosingClass()) return;
+	if (!CanSelectEnemy(SelectedEnemy.Get())) UpdateSelectedEnemy(nullptr);
+	if (SelectedCharacter.IsValid() && !SelectedCharacter->IsAlive()) UpdateSelectedCharacter(nullptr);
 	FHitResult Hit;
 	GetHitResultUnderCursorByChannel(UEngineTypes::ConvertToTraceType(ECC_Visibility), false, Hit);
 	auto* Candidate = Hit.bBlockingHit ? Cast<ABaseCharacter>(Hit.GetActor()) : nullptr;
-	UpdateHoveredCharacter(IsValid(Candidate) && Candidate == AssignedCharacter ? Candidate : nullptr);
+	UpdateHoveredCharacter(IsValid(Candidate) && Candidate->IsAlive()
+		&& (Candidate == AssignedCharacter || CanSelectEnemy(Candidate)) ? Candidate : nullptr);
 }
 
 void ABoldersPlayerController::UpdateHoveredCharacter(ABaseCharacter* TargetCharacter)
 {
 	if (HoveredCharacter.Get() == TargetCharacter) return;
-	if (HoveredCharacter.IsValid()) HoveredCharacter->SetHoverOutline(false);
+	ABaseCharacter* Previous = HoveredCharacter.Get();
 	HoveredCharacter = TargetCharacter;
-	if (HoveredCharacter.IsValid()) HoveredCharacter->SetHoverOutline(true);
+	RefreshOutline(Previous);
+	RefreshOutline(TargetCharacter);
+}
+
+bool ABoldersPlayerController::CanSelectEnemy(const ABaseCharacter* TargetCharacter) const
+{
+	return IsValid(TargetCharacter) && TargetCharacter->IsA<AEnemyCharacter>() && TargetCharacter->IsAlive()
+		&& IsValid(AssignedCharacter) && AssignedCharacter->IsAlive()
+		&& AssignedCharacter->IsHostileTo(TargetCharacter);
+}
+
+void ABoldersPlayerController::UpdateSelectedEnemy(ABaseCharacter* TargetCharacter)
+{
+	if (SelectedEnemy.Get() == TargetCharacter) return;
+	ABaseCharacter* Previous = SelectedEnemy.Get();
+	SelectedEnemy = TargetCharacter;
+	RefreshOutline(Previous);
+	RefreshOutline(TargetCharacter);
+}
+
+void ABoldersPlayerController::RefreshOutline(ABaseCharacter* TargetCharacter)
+{
+	if (!IsLocalController() || !IsValid(TargetCharacter)) return;
+	TargetCharacter->SetHoverOutline(TargetCharacter->IsAlive() && HoveredCharacter.Get() == TargetCharacter,
+		CanSelectEnemy(TargetCharacter) && SelectedEnemy.Get() == TargetCharacter);
+	TargetCharacter->FactionRing->SetSelected(TargetCharacter->IsAlive()
+		&& (SelectedCharacter.Get() == TargetCharacter || SelectedEnemy.Get() == TargetCharacter));
+}
+
+void ABoldersPlayerController::UpdateSelectedCharacter(ABaseCharacter* TargetCharacter)
+{
+	if (SelectedCharacter.Get() == TargetCharacter) return;
+	ABaseCharacter* Previous = SelectedCharacter.Get();
+	SelectedCharacter = TargetCharacter;
+	RefreshOutline(Previous);
+	RefreshOutline(TargetCharacter);
+}
+
+void ABoldersPlayerController::ClearSelection()
+{
+	if (!IsLocalController()) return;
+	UpdateSelectedEnemy(nullptr);
+	UpdateSelectedCharacter(nullptr);
 }
 
 void ABoldersPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -139,4 +210,45 @@ void ABoldersPlayerController::ClientMoveFeedback_Implementation(bool bAccepted,
 {
 	if (auto* Effect = bAccepted ? MoveAcceptedFX.Get() : MoveRejectedFX.Get())
 		UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, Effect, Location + FVector(0,0,3));
+}
+
+void ABoldersPlayerController::ServerRequestAttack_Implementation(ABaseCharacter* Attacker, ABaseCharacter* Target)
+{
+ if (IsValid(Attacker) && Attacker == AssignedCharacter) Attacker->Combat->RequestAttack(Target);
+}
+
+void ABoldersPlayerController::OpenClassSelection()
+{
+	if (!IsLocalController() || AssignedCharacter || ClassSelectionScreen || !SelectionCatalog || !SelectionWidgetClass) return;
+	ClassSelectionScreen=CreateWidget<UClassSelectionWidget>(this,SelectionWidgetClass);
+	if (!ClassSelectionScreen) return;
+	ClassSelectionScreen->SetIsFocusable(true);
+	ClassSelectionScreen->AddToPlayerScreen(100);
+	FInputModeUIOnly Mode; Mode.SetWidgetToFocus(ClassSelectionScreen->TakeWidget());
+	Mode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock); SetInputMode(Mode);
+}
+void ABoldersPlayerController::CloseClassSelection()
+{
+	if (!ClassSelectionScreen) return;
+	ClassSelectionScreen->RemoveFromParent(); ClassSelectionScreen=nullptr;
+	if (IsLocalController())
+	{
+		FInputModeGameAndUI Mode; Mode.SetHideCursorDuringCapture(false);
+		Mode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock); SetInputMode(Mode);
+	}
+}
+void ABoldersPlayerController::SubmitClassSelection(FName ClassId)
+{
+	if (IsLocalController() && !AssignedCharacter) ServerChooseClass(ClassId);
+}
+void ABoldersPlayerController::ServerChooseClass_Implementation(FName ClassId)
+{
+	if (AssignedCharacter) return;
+	auto* GM=GetWorld()->GetAuthGameMode<ABoldersGameMode>();
+	if (!GM || !GM->ChooseStartingClass(this,ClassId))
+		ClientClassSelectionFailed(FText::FromString(TEXT("无法生成该职业，请重新选择或稍后重试。")));
+}
+void ABoldersPlayerController::ClientClassSelectionFailed_Implementation(const FText& Reason)
+{
+	if (ClassSelectionScreen) ClassSelectionScreen->ShowFailure(Reason);
 }

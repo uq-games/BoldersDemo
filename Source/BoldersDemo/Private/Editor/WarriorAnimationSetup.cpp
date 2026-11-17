@@ -36,7 +36,7 @@ static void BuildWarriorAnimation()
 		FBlendParameter* Axis = Property->ContainerPtrToValuePtr<FBlendParameter>(BS);
 		Axis->DisplayName = TEXT("Speed");
 		Axis->Min = 0.f; Axis->Max = 300.f; Axis->GridNum = 6;
-		const TCHAR* Paths[] = { TEXT("/Animations/General/A_Warrior_GeneralIdle_A"), TEXT("/Animations/MovementBasic/A_Warrior_MovementBasic_Walking_A"), TEXT("/Animations/MovementBasic/A_Warrior_MovementBasic_Running_A") };
+		const TCHAR* Paths[] = { TEXT("/Animations/Idle/A_Warrior_GeneralIdle_A"), TEXT("/Animations/Locomotion/A_Warrior_MovementBasic_Walking_A"), TEXT("/Animations/Locomotion/A_Warrior_MovementBasic_Running_A") };
 		for (int32 I = 0; I < 3; ++I)
 		{
 			auto* Anim = LoadObject<UAnimSequence>(nullptr, *(Root + Paths[I]));

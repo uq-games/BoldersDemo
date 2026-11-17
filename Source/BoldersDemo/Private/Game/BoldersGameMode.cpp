@@ -4,17 +4,28 @@
 #include "EngineUtils.h"
 #include "Engine/TargetPoint.h"
 #include "Player/BoldersPlayerController.h"
+#include "UI/ClassSelectionData.h"
 
 void ABoldersGameMode::HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer)
 {
 	Super::HandleStartingNewPlayer_Implementation(NewPlayer);
 	auto* PC = Cast<ABoldersPlayerController>(NewPlayer);
 	if (!PC || IsValid(PC->GetAssignedCharacter())) return;
-	if (!WarriorClass)
-	{
-		UE_LOG(LogTemp, Error, TEXT("WarriorSpawn: WarriorClass is not configured."));
-		return;
-	}
+	if (SelectionCatalog) return; // Keep the camera pawn, wait for this player's confirmed choice.
+	SpawnAssignedCharacter(PC,nullptr);
+}
+
+bool ABoldersGameMode::ChooseStartingClass(ABoldersPlayerController* PC, FName ClassId)
+{
+	if (!HasAuthority() || !IsValid(PC) || PC->GetWorld()!=GetWorld() || PC->GetAssignedCharacter() || !SelectionCatalog) return false;
+	for (const UClassSelectionData* Definition : SelectionCatalog->Classes)
+		if (Definition && Definition->ClassId == ClassId && Definition->CharacterClass)
+			return SpawnAssignedCharacter(PC,Definition->CharacterClass);
+	return false;
+}
+
+bool ABoldersGameMode::SpawnAssignedCharacter(ABoldersPlayerController* PC, TSubclassOf<ABaseCharacter> RequestedClass)
+{
 	TArray<ATargetPoint*> Starts;
 	for (TActorIterator<ATargetPoint> It(GetWorld()); It; ++It)
 		if (It->ActorHasTag(TEXT("WarriorSpawn"))) Starts.Add(*It);
@@ -27,15 +38,22 @@ void ABoldersGameMode::HandleStartingNewPlayer_Implementation(APlayerController*
 		if (bOccupied) continue;
 		FActorSpawnParameters Params;
 		Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
-		auto* Warrior = GetWorld()->SpawnActor<AWarriorCharacter>(WarriorClass, Start->GetActorTransform(), Params);
-		if (!Warrior) continue;
-		Warrior->PlayerSlot = Starts.IndexOfByKey(Start) + 1;
-		PC->AssignCharacter(Warrior);
+		const int32 SlotIndex = Starts.IndexOfByKey(Start);
+		TSubclassOf<ABaseCharacter> CharacterClass = WarriorClass.Get();
+		if (StartingCharacterClasses.IsValidIndex(SlotIndex) && StartingCharacterClasses[SlotIndex])
+			CharacterClass = StartingCharacterClasses[SlotIndex];
+		if (RequestedClass) CharacterClass=RequestedClass;
+		if (!CharacterClass || CharacterClass->HasAnyClassFlags(CLASS_Abstract)) continue;
+		auto* Character = GetWorld()->SpawnActor<ABaseCharacter>(CharacterClass, Start->GetActorTransform(), Params);
+		if (!Character) continue;
+		Character->PlayerSlot = SlotIndex + 1;
+		PC->AssignCharacter(Character);
 		OccupiedStarts.Add(PC, Start);
-		UE_LOG(LogTemp, Log, TEXT("WarriorSpawn: %s assigned %s"), *PC->GetName(), *Warrior->GetName());
-		return;
+		UE_LOG(LogTemp, Log, TEXT("WarriorSpawn: %s assigned %s"), *PC->GetName(), *Character->GetName());
+		return true;
 	}
 	UE_LOG(LogTemp, Error, TEXT("WarriorSpawn: No available WarriorSpawn target point for %s."), *PC->GetName());
+	return false;
 }
 
 void ABoldersGameMode::Logout(AController* Exiting)
