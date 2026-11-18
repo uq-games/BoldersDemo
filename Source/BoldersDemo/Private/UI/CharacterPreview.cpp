@@ -59,6 +59,11 @@ void ACharacterPreview::Configure(UClassSelectionData* Data)
 {
 	if (!Data || !Data->PreviewMesh || !Data->AnimationClass) return;
 	Definition = Data;
+	const auto* Defaults = GetClass()->GetDefaultObject<ACharacterPreview>();
+	FRotator MeshRotation = Defaults->CharacterMesh->GetRelativeRotation();
+	MeshRotation.Yaw += Data->PreviewYawOffset;
+	CharacterMesh->SetRelativeRotation(MeshRotation);
+	Capture->FOVAngle = FMath::Clamp(Defaults->Capture->FOVAngle + Data->PreviewFovOffset, 10.f, 80.f);
 	SetActorTickEnabled(Data->bAnimateBowString);
 	UpperString->SetVisibility(Data->bAnimateBowString); LowerString->SetVisibility(Data->bAnimateBowString);
 	CharacterMesh->SetSkeletalMeshAsset(Data->PreviewMesh);

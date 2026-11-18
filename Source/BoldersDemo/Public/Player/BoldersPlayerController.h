@@ -22,8 +22,12 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	void AssignCharacter(ABaseCharacter* TargetCharacter);
 	ABaseCharacter* GetAssignedCharacter() const { return AssignedCharacter; }
+	int32 GetPlayerSlot() const { return PlayerSlot; }
+	void SetPlayerSlot(int32 Slot);
 	UFUNCTION(BlueprintCallable, Category="Selection")
 	void ClearSelection();
+	UFUNCTION(BlueprintCallable, Category="Combat")
+	void SelectAttackSlot(int32 SlotIndex);
 protected:
 	UPROPERTY(EditDefaultsOnly, Category="Class Selection") TObjectPtr<UClassSelectionCatalog> SelectionCatalog;
 	UPROPERTY(EditDefaultsOnly, Category="Class Selection") TSubclassOf<UClassSelectionWidget> SelectionWidgetClass;
@@ -34,6 +38,7 @@ protected:
 	void UpdateHoveredCharacter(ABaseCharacter* TargetCharacter);
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type Reason) override;
+	virtual void ReceivedPlayer() override;
 	virtual void SetupInputComponent() override;
 	void HandleCommandClick();
 	UFUNCTION(Client, Reliable)
@@ -46,7 +51,8 @@ protected:
 	void ServerRequestMove(ABaseCharacter* TargetCharacter, FVector_NetQuantize Destination);
 	UFUNCTION()
 	void OnRep_AssignedCharacter();
- UFUNCTION(Server, Reliable) void ServerRequestAttack(ABaseCharacter* Attacker, ABaseCharacter* Target);
+	UFUNCTION(Server, Reliable) void ServerRequestAttack(ABaseCharacter* Attacker, ABaseCharacter* Target);
+	UFUNCTION(Server, Reliable) void ServerEquipAttack(FName ModuleId);
 
 	UPROPERTY(EditDefaultsOnly, Category="Input")
 	TObjectPtr<UInputMappingContext> CameraMappingContext;
@@ -60,6 +66,9 @@ protected:
 	UPROPERTY(Transient)
 	TWeakObjectPtr<ABaseCharacter> SelectedCharacter;
 private:
+	UFUNCTION() void OnRep_PlayerSlot();
+	UPROPERTY(Transient, ReplicatedUsing=OnRep_PlayerSlot, BlueprintReadOnly, Category="Class Selection", meta=(AllowPrivateAccess="true"))
+	int32 PlayerSlot = 0;
 	void OpenClassSelection();
 	void CloseClassSelection();
 	friend class FMonsterOutlineStateTest;

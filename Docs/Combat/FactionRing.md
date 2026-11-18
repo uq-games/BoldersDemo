@@ -13,7 +13,7 @@
 | Decal Material | `/Game/BoldersDemo/Assets/Shared/Materials/M_FactionRing` |
 | Player Color / Enemy Color | 蓝色 / 红色 |
 | Normal Brightness / Selected Brightness | 0.7 / 3.0 |
-| Radius | 当前战士/小怪蓝图配置 100 cm（C++ 默认 55 cm），让圆环露出模型脚部；这是投射盒的平面半宽，材质外沿位于 UV 半径 0.44 |
+| Radius | 战士、弓箭手、法师与蘑菇怪蓝图配置 76 cm（C++ 默认 55 cm），让圆环露出模型脚部；这是投射盒的平面半宽，材质外沿位于 UV 半径 0.44 |
 | Projection Depth | 24 cm，投射盒沿地面法线的半深度 |
 | Trace Above Feet / Below Feet | 从脚底上方 40 cm 向下检测至脚底下方 160 cm |
 | Surface Offset | 沿地面法线抬高 1 cm |
@@ -58,7 +58,7 @@ flowchart TD
 
 - Development Editor 构建通过。
 - `BoldersDemo.Presentation.FactionRing` 与原 `MonsterOutline` 自动化测试通过。覆盖每角色独立 MID、蓝红参数、选择与取消、平地、20 度斜坡、高台、移动、无地面、死亡及中立隐藏。
-- 独立进程读取确认角色蓝图保存了贴花材质。最终蓝图尺寸为实测后调整的 100 cm。
+- 独立进程读取确认角色蓝图保存了贴花材质。本轮调整后蓝图半径为 76 cm。
 - TestMap 的 Client 1 窗口实测蓝/红圆环显示、点击我方和怪物选中、取消与移动跟随。运行时记录确认客户端选中亮度为 3.0，服务器对应角色仍为 0.7，体现本地选择隔离。
 - 当前 PIE 的 Esc 由编辑器用于结束预览；取消选择通过同一 `ClearSelection()` 入口实测。未做打包或专用服务器进程验收，也未对复杂连续崎岖地形作逐帧视觉验收。
 - 日志和运行记录：`Saved/FactionRing/StateTests.log`、`Tests.log`、`RuntimeSelection.txt`、`RuntimeEnemySelection.txt`、`RuntimeMovement.txt`。测试已结束，编辑器保持打开。

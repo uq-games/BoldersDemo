@@ -8,6 +8,7 @@ UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Event_BasicAttack);
 UE_DECLARE_GAMEPLAY_TAG_EXTERN(TAG_Event_AttackHit);
 class ABaseCharacter;
 class AWeapon;
+struct FAttackModule;
 
 // A single server-authoritative attack command, including its approach.
 UCLASS()
@@ -22,6 +23,8 @@ public:
 		const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
 private:
 	bool IsTargetInReach() const;
+	float GetAttackRange() const;
+	const FAttackModule* GetModule() const;
 	void OnPositionReady(bool bArrived);
 	void StartMontage();
 	UFUNCTION() void OnHitEvent(FGameplayEventData Payload);
@@ -31,5 +34,6 @@ private:
 	UPROPERTY(Transient) TWeakObjectPtr<ABaseCharacter> Attacker;
 	UPROPERTY(Transient) TWeakObjectPtr<ABaseCharacter> Target;
 	UPROPERTY(Transient) TWeakObjectPtr<AWeapon> Weapon;
+	FName ModuleId;
 	bool bHitPending = false;
 };

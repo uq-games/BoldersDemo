@@ -21,6 +21,8 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly) FText DisplayName;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly) FText RoleText;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly) FText Description;
+	// Normalized rectangle in the catalog's pre-lettered caption atlas.
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Portrait") FVector4 CaptionUV = FVector4(0, 0, 1, 1);
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly) TSubclassOf<ABaseCharacter> CharacterClass;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly) TObjectPtr<USkeletalMesh> PreviewMesh;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly) TSubclassOf<UPreviewAnimInstance> AnimationClass;
@@ -35,6 +37,8 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly) TObjectPtr<UStaticMesh> PedestalMesh;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly) FVector PedestalScale = FVector(.33f,.27f,.35f);
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly) float FeetHeight = 27.f;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Portrait") float PreviewYawOffset = 0.f;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Portrait") float PreviewFovOffset = 0.f;
 };
 
 UCLASS(BlueprintType)
@@ -48,5 +52,7 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly) TObjectPtr<UMaterialInterface> PortraitMaterial;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly) TObjectPtr<UTexture2D> Background;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly) TObjectPtr<UTexture2D> CardFrame;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly) TObjectPtr<UTexture2D> SelectedCardFrame;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly) TObjectPtr<UTexture2D> ConfirmPlate;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly) TObjectPtr<UTexture2D> CaptionAtlas;
 };

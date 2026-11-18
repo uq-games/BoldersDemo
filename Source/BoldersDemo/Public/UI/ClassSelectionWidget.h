@@ -7,7 +7,6 @@ class UClassCardWidget;
 class UClassSelectionCatalog;
 class UButton;
 class UImage;
-class UTextBlock;
 
 UCLASS()
 class BOLDERSDEMO_API UClassSelectionWidget : public UUserWidget
@@ -26,10 +25,14 @@ protected:
 	UPROPERTY(meta=(BindWidget)) TObjectPtr<UClassCardWidget> MageCard;
 	UPROPERTY(meta=(BindWidget)) TObjectPtr<UButton> ConfirmButton;
 	UPROPERTY(meta=(BindWidget)) TObjectPtr<UButton> ClearButton;
-	UPROPERTY(meta=(BindWidget)) TObjectPtr<UTextBlock> StatusText;
 	UPROPERTY(meta=(BindWidget)) TObjectPtr<UImage> BackgroundImage;
 	UPROPERTY(meta=(BindWidget)) TObjectPtr<UImage> ConfirmImage;
+	UPROPERTY(meta=(BindWidgetOptional)) TObjectPtr<UImage> HostPlate;
+	UPROPERTY(meta=(BindWidgetOptional)) TObjectPtr<UImage> GuestPlate;
+	UPROPERTY(meta=(BindWidgetOptional)) TObjectPtr<UImage> WaitingArtwork;
+	UPROPERTY(meta=(BindWidgetOptional)) TObjectPtr<UImage> FailureArtwork;
 private:
+	void SetStatusArtwork(UImage* ActiveArtwork);
 	UPROPERTY(Transient) TObjectPtr<UClassSelectionCatalog> Catalog;
 	bool bWaitingForServer = false;
 };

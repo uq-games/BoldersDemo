@@ -17,7 +17,7 @@
 
 `ABoldersPlayerController::PlayerTick` 仅在本地检测鼠标，使用弱指针记录 HoveredCharacter。命中对象改变、鼠标离开、分配角色改变或控制器退出时关闭旧轮廓。`ABaseCharacter::SetHoverOutline` 同时遍历角色的网格组件，包括运行时创建的剑盾；胶囊不参与描边。
 
-服务器通过 GameMode 出生点顺序为角色设置 PlayerSlot，并复制给所有客户端。1P/2P 是房间出生槽位，不是客户端各自的本地玩家下标，所以双方看到相同编号。它不是控制权限依据；权限仍由 PlayerController.AssignedCharacter 判断。
+服务器在玩家进入时分配 PlayerSlot，监听服务器主机为 1P，加入的玩家为 2P。职业选择界面先显示编号。确认后，角色沿用该编号，并在对应的出生点生成。服务器把角色编号复制给所有客户端，控制权限仍由 PlayerController.AssignedCharacter 判断。
 
 `ABoldersHUD` 只负责头顶标记。`BP_BoldersHUD` 配置图集和大小，由 BP_BoldersGameMode.HUDClass 指定。MarkerAtlas 使用 UPROPERTY 持有。
 

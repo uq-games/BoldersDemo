@@ -5,7 +5,10 @@
 #include "Characters/BaseCharacter.h"
 #include "AbilitySystemComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Components/StaticMeshComponent.h"
 #include "Engine/World.h"
+#include "GameFramework/GameStateBase.h"
+#include "Net/UnrealNetwork.h"
 
 UCharacterCombatComponent::UCharacterCombatComponent()
 {
@@ -17,6 +20,12 @@ void UCharacterCombatComponent::BeginPlay()
 	Super::BeginPlay();
 	Character = CastChecked<ABaseCharacter>(GetOwner());
 	SpawnWeapon();
+	if (Character->HasAuthority() && AttackLoadout && !AttackLoadout->Modules.IsEmpty())
+	{
+		ReadyTimes.SetNumZeroed(AttackLoadout->Modules.Num());
+		ActiveModuleId = AttackLoadout->Modules[0].Id;
+	}
+	OnRep_Equipment();
 }
 void UCharacterCombatComponent::SpawnWeapon()
 {
@@ -25,6 +34,76 @@ void UCharacterCombatComponent::SpawnWeapon()
 	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	Weapon = GetWorld()->SpawnActor<AWeapon>(WeaponClass, Params);
 	if (Weapon) Weapon->AttachToComponent(Character->GetMesh(), FAttachmentTransformRules::SnapToTargetNotIncludingScale, Weapon->AttachSocket);
+}
+
+void UCharacterCombatComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+	DOREPLIFETIME(UCharacterCombatComponent, Weapon);
+	DOREPLIFETIME(UCharacterCombatComponent, ActiveModuleId);
+	DOREPLIFETIME(UCharacterCombatComponent, ReadyTimes);
+}
+
+const FAttackModule* UCharacterCombatComponent::FindModule(FName Id) const
+{
+	return AttackLoadout ? AttackLoadout->Modules.FindByPredicate([Id](const FAttackModule& Entry) { return Entry.Id == Id; }) : nullptr;
+}
+
+float UCharacterCombatComponent::GetCombatTime() const
+{
+	const auto* State = GetWorld()->GetGameState();
+	return State ? State->GetServerWorldTimeSeconds() : GetWorld()->GetTimeSeconds();
+}
+
+float UCharacterCombatComponent::GetCooldownRemaining(FName Id) const
+{
+	const FAttackModule* Module = FindModule(Id);
+	if (!Module) return 0.f;
+	const int32 Index = static_cast<int32>(Module - AttackLoadout->Modules.GetData());
+	return ReadyTimes.IsValidIndex(Index) ? FMath::Max(0.f, ReadyTimes[Index] - GetCombatTime()) : 0.f;
+}
+
+void UCharacterCombatComponent::CommitAttackCooldown()
+{
+	const FAttackModule* Module = GetActiveModule();
+	if (!Module || !Character->HasAuthority()) return;
+	ReadyTimes[Module - AttackLoadout->Modules.GetData()] = GetCombatTime() + Module->Cooldown;
+	Character->ForceNetUpdate();
+}
+
+bool UCharacterCombatComponent::EquipAttack(FName ModuleId)
+{
+	if (!Character || !Character->HasAuthority() || !Character->IsAlive() || !FindModule(ModuleId)) return false;
+	if (ActiveModuleId == ModuleId) return true;
+	CancelAttack();
+	ActiveModuleId = ModuleId;
+	AttackIndex = 0;
+	OnRep_Equipment();
+	Character->ForceNetUpdate();
+	return true;
+}
+
+void UCharacterCombatComponent::OnRep_Equipment()
+{
+	const FAttackModule* Module = GetActiveModule();
+	if (!Character || !Module) return;
+	if (Weapon && Module->WeaponMesh)
+	{
+		Weapon->Mesh->SetStaticMesh(Module->WeaponMesh);
+		Weapon->Mesh->SetRelativeLocation(Module->WeaponGripOffset);
+	}
+	if (!Offhand && Module->OffhandMesh)
+	{
+		Offhand = NewObject<UStaticMeshComponent>(Character, TEXT("AttackOffhand"));
+		Offhand->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		Offhand->SetCanEverAffectNavigation(false);
+		Offhand->RegisterComponent();
+	}
+	if (Offhand)
+	{
+		Offhand->AttachToComponent(Character->GetMesh(), FAttachmentTransformRules::SnapToTargetIncludingScale, Module->OffhandSocket);
+		Offhand->SetStaticMesh(Module->OffhandMesh);
+	}
 }
 void UCharacterCombatComponent::GrantBasicAttack()
 {
@@ -44,14 +123,18 @@ void UCharacterCombatComponent::EndPlay(const EEndPlayReason::Type Reason)
 	if (Character && Character->HasAuthority() && BasicAttackHandle.IsValid())
 		Character->GetAbilitySystemComponent()->ClearAbility(BasicAttackHandle);
 	BasicAttackHandle = FGameplayAbilitySpecHandle();
-	if (IsValid(Weapon)) Weapon->Destroy();
+	if (Character && Character->HasAuthority() && IsValid(Weapon)) Weapon->Destroy();
+	if (IsValid(Offhand)) Offhand->DestroyComponent();
 	Super::EndPlay(Reason);
 }
-bool UCharacterCombatComponent::RequestAttack(ABaseCharacter* Target)
+bool UCharacterCombatComponent::RequestAttack(ABaseCharacter* Target, FName ModuleId)
 {
-	if (!Character || !Character->HasAuthority() || !Character->IsAlive()
+	if (!Character || !Character->HasAuthority() || !Character->IsAlive() || Character->IsFrozen()
 		|| !IsValid(Target) || !Target->IsAlive() || !Character->IsHostileTo(Target)
-		|| !IsValid(Weapon) || Weapon->AttackMontages.IsEmpty() || !BasicAttackHandle.IsValid()) return false;
+		|| !IsValid(Weapon) || !BasicAttackHandle.IsValid()) return false;
+	if (!ModuleId.IsNone() && !EquipAttack(ModuleId)) return false;
+	const FAttackModule* Module = GetActiveModule();
+	if (Module ? Module->Montages.IsEmpty() || GetCooldownRemaining(Module->Id) > 0.f : Weapon->AttackMontages.IsEmpty()) return false;
 	CancelAttack();
 	FGameplayEventData Payload; Payload.Instigator = Character; Payload.Target = Target;
 	return Character->GetAbilitySystemComponent()->HandleGameplayEvent(TAG_Event_BasicAttack, &Payload) > 0;
@@ -63,7 +146,10 @@ void UCharacterCombatComponent::CancelAttack()
 }
 UAnimMontage* UCharacterCombatComponent::SelectNextMontage()
 {
-	if (!Weapon || Weapon->AttackMontages.IsEmpty()) return nullptr;
-	AttackIndex %= Weapon->AttackMontages.Num();
-	return Weapon->AttackMontages[AttackIndex++];
+	if (!Weapon) return nullptr;
+	const FAttackModule* Module = GetActiveModule();
+	const auto& Montages = Module ? Module->Montages : Weapon->AttackMontages;
+	if (Montages.IsEmpty()) return nullptr;
+	AttackIndex %= Montages.Num();
+	return Montages[AttackIndex++];
 }

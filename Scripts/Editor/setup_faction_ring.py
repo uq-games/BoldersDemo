@@ -53,7 +53,7 @@ for asset_path in E.list_assets('/Game/BoldersDemo/Blueprints/Characters', recur
     assert ring, asset_path
     ring.set_editor_property('decal_material', mat)
     # These characters' visible feet exceed their capsule radius; keep the ring outside them.
-    ring.set_editor_property('radius', 100.0)
+    ring.set_editor_property('radius', 76.0)
     ring.set_editor_property('player_color', unreal.LinearColor(0.01, 0.08, 1, 1))
     unreal.BlueprintEditorLibrary.compile_blueprint(bp)
     assert E.save_loaded_asset(bp, False)

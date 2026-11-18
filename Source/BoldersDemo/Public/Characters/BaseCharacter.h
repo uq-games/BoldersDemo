@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystemInterface.h"
+#include "Combat/AttackLoadout.h"
 #include "GameFramework/Character.h"
 #include "BaseCharacter.generated.h"
 
@@ -13,6 +14,7 @@ class UBoldersAttributeSet;
 class UBaseCharacterAnimInstance;
 class UAnimMontage;
 struct FOnAttributeChangeData;
+struct FGameplayTag;
 
 UENUM(BlueprintType)
 enum class ECharacterFaction : uint8 { Neutral, Player, Enemy };
@@ -31,16 +33,32 @@ public:
 	UBaseCharacterAnimInstance* GetCharacterAnimation() const;
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
 	UFUNCTION(BlueprintPure, Category="Combat") bool IsAlive() const;
+	UFUNCTION(BlueprintPure, Category="Combat") bool IsFrozen() const;
+	UFUNCTION(BlueprintPure, Category="Combat") EElementalAura GetElementalAura() const;
 	UFUNCTION(BlueprintPure, Category="Combat") ECharacterFaction GetFaction() const { return Faction; }
 	UFUNCTION(BlueprintPure, Category="Combat") float GetHealth() const;
 	UFUNCTION(BlueprintPure, Category="Combat") float GetMaxHealth() const;
 	UFUNCTION(BlueprintPure, Category="Combat") bool IsHostileTo(const ABaseCharacter* Other) const;
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="Combat")
 	bool ReceiveDamageFrom(ABaseCharacter* Source, float Damage);
+	bool ReceiveDamageAt(ABaseCharacter* Source, float Damage, const FVector& Contact);
+	bool ReceiveElementDamage(ABaseCharacter* Source, float Damage, EDamageElement Element);
+	void ApplyFreezeFrom(ABaseCharacter* Source);
+	void ApplyElementalAura(ABaseCharacter* Source, EElementalAura Aura);
+	void ClearElementalAura(EElementalAura Aura);
+	void ApplyCombatImpulse(const FVector& VelocityChange);
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 	UPROPERTY(Replicated, BlueprintReadOnly, Category="Character")
 	int32 PlayerSlot = 0;
 	// Local presentation only; does not change selection or gameplay authority.
+	UPROPERTY(EditDefaultsOnly, Category="Combat|Presentation") TObjectPtr<UMaterialInterface> SwingMaterial;
+	UPROPERTY(EditDefaultsOnly, Category="Combat|Presentation") TObjectPtr<UMaterialInterface> ImpactMaterial;
+	UFUNCTION(NetMulticast, Unreliable) void MulticastAttackVisual(FVector_NetQuantize Location, FRotator Facing, bool bImpact);
+	UFUNCTION(NetMulticast, Unreliable) void MulticastModuleVisual(FName ModuleId, EAttackVisualStage Stage,
+		FVector_NetQuantize Location, FVector_NetQuantize End);
+	UFUNCTION(NetMulticast, Unreliable) void MulticastElementalReaction(EElementalReaction Reaction,
+		FVector_NetQuantize Location, FVector_NetQuantize End);
+	UFUNCTION(NetMulticast, Unreliable) void MulticastModuleWindup(FName ModuleId, float Duration);
 	void SetHoverOutline(bool bEnabled, bool bSelected = false);
 	// Accepted does not mean arrived. Only the server may execute this request.
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="Character|Movement")
@@ -57,6 +75,7 @@ protected:
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type Reason) override;
 	void HandleHealthChanged(const FOnAttributeChangeData& Data);
+	void HandleFrozenChanged(const FGameplayTag Tag, int32 Count);
 	void ApplyAnimationBlueprint();
 	UFUNCTION(NetMulticast, Reliable) void MulticastPlayHitReaction();
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Character|Animation")
@@ -69,4 +88,15 @@ protected:
 	ECharacterFaction Faction = ECharacterFaction::Neutral;
 	UPROPERTY(EditDefaultsOnly, Category="Combat", meta=(ClampMin="1"))
 	float InitialMaxHealth = 100.f;
+	UPROPERTY(EditDefaultsOnly, Category="Combat|Resistance", meta=(ClampMin="-.75", ClampMax=".9"))
+	float PhysicalResistance = 0.f;
+	UPROPERTY(EditDefaultsOnly, Category="Combat|Resistance", meta=(ClampMin="-.75", ClampMax=".9"))
+	float FireResistance = 0.f;
+	UPROPERTY(EditDefaultsOnly, Category="Combat|Resistance", meta=(ClampMin="-.75", ClampMax=".9"))
+	float IceResistance = 0.f;
+	UPROPERTY(EditDefaultsOnly, Category="Combat|Resistance", meta=(ClampMin="-.75", ClampMax=".9"))
+	float WaterResistance = 0.f;
+	UPROPERTY(EditDefaultsOnly, Category="Combat|Resistance", meta=(ClampMin="-.75", ClampMax=".9"))
+	float LightningResistance = 0.f;
+	UPROPERTY(Transient) TWeakObjectPtr<AActor> LocalWindupVisual;
 };

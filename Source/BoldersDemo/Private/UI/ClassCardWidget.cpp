@@ -3,9 +3,9 @@
 #include "UI/CharacterPreview.h"
 #include "Components/Button.h"
 #include "Components/Image.h"
-#include "Components/TextBlock.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Engine/TextureRenderTarget2D.h"
+#include "Engine/Texture2D.h"
 #include "Engine/World.h"
 
 void UClassCardWidget::NativeConstruct()
@@ -21,8 +21,16 @@ void UClassCardWidget::Configure(UClassSelectionCatalog* Catalog, int32 Index)
 	if (IsValid(Preview)) Preview->Destroy();
 	CardIndex = Index;
 	const auto* Data = Catalog->Classes[Index].Get();
-	NameText->SetText(Data->DisplayName); RoleText->SetText(Data->RoleText); DescriptionText->SetText(Data->Description);
-	Frame->SetBrushFromTexture(Catalog->CardFrame);
+	if (Caption && Catalog->CaptionAtlas)
+	{
+		const FVector4& UV = Data->CaptionUV;
+		FSlateBrush Brush = Caption->GetBrush();
+		Brush.SetResourceObject(Catalog->CaptionAtlas);
+		Brush.SetUVRegion(FBox2f(FVector2f(UV.X, UV.Y), FVector2f(UV.Z, UV.W)));
+		Caption->SetBrush(Brush);
+	}
+	NormalFrame = Catalog->CardFrame;
+	SelectedFrame = Catalog->SelectedCardFrame;
 	FActorSpawnParameters Params; Params.Owner = GetOwningPlayer();
 	Params.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
 	Preview = GetWorld()->SpawnActor<ACharacterPreview>(Catalog->PreviewActorClass,
@@ -47,8 +55,9 @@ void UClassCardWidget::UpdateState()
 {
 	const bool bHover=CardButton->IsHovered();
 	if (Preview) Preview->SetDisplayState(bIsSelected ? 2 : bHover ? 1 : 0);
-	SelectionText->SetText(bIsSelected ? FText::FromString(TEXT("✓ 已选择")) : FText::GetEmpty());
-	Frame->SetColorAndOpacity(bIsSelected ? FLinearColor(.35f,1.f,.9f,1.f) : bHover ? FLinearColor(1.f,1.f,.9f,1.f) : FLinearColor(.8f,.8f,.8f,.85f));
+	if (ChosenBadge) ChosenBadge->SetVisibility(bIsSelected ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Hidden);
+	Frame->SetBrushFromTexture(bIsSelected && SelectedFrame ? SelectedFrame : NormalFrame);
+	Frame->SetColorAndOpacity(bHover && !bIsSelected ? FLinearColor(1.13f, 1.12f, 1.12f) : FLinearColor::White);
 }
 void UClassCardWidget::NativeDestruct()
 {

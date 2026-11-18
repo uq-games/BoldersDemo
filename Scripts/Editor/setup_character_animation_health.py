@@ -1,6 +1,7 @@
 """Run after Bolders.BuildMushroomAnimation. Saves project-owned defaults and TestMap instances."""
-import unreal
+import runpy
 from pathlib import Path
+import unreal
 
 unreal.SystemLibrary.execute_console_command(None, 'Bolders.BuildMushroomAnimation')
 # Reconstruct inherited Speed references after introducing the shared animation parent.
@@ -32,21 +33,7 @@ for bp_path, anim_path, hit_path in configs:
   m.set_update_animation_in_editor(True)
  print('ANIM_CONFIGURED',bp_path,anim_class)
 
-task = unreal.AssetImportTask()
-task.filename = str(Path(unreal.Paths.project_dir()) / 'ArtSources/UI/HealthBarFrame.png')
-task.destination_path = '/Game/BoldersDemo/Assets/UI/Health'
-task.destination_name = 'T_HealthBarFrame'
-task.automated = True; task.save = True; task.replace_existing = True
-unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])
-texture = unreal.load_asset('/Game/BoldersDemo/Assets/UI/Health/T_HealthBarFrame')
-assert texture
-texture.set_editor_property('compression_settings',unreal.TextureCompressionSettings.TC_EDITOR_ICON)
-texture.set_editor_property('lod_group',unreal.TextureGroup.TEXTUREGROUP_UI)
-texture.set_editor_property('mip_gen_settings',unreal.TextureMipGenSettings.TMGS_NO_MIPMAPS)
-unreal.EditorAssetLibrary.save_loaded_asset(texture, False)
-hud = unreal.load_asset('/Game/BoldersDemo/Blueprints/UI/BP_BoldersHUD')
-unreal.get_default_object(hud.generated_class()).set_editor_property('health_bar_frame',texture)
-unreal.BlueprintEditorLibrary.compile_blueprint(hud)
-assert unreal.EditorAssetLibrary.save_loaded_asset(hud,False)
+hud_script = Path(unreal.Paths.project_dir()) / 'Scripts/Editor/setup_combat_hud.py'
+runpy.run_path(str(hud_script.resolve()), run_name='__main__')
 assert unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).save_current_level()
 print('ANIMATION_HEALTH_SETUP_DONE')

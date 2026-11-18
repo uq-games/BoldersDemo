@@ -8,7 +8,7 @@ class UClassSelectionCatalog;
 class ACharacterPreview;
 class UButton;
 class UImage;
-class UTextBlock;
+class UTexture2D;
 class UMaterialInstanceDynamic;
 
 DECLARE_MULTICAST_DELEGATE_OneParam(FOnClassCardChosen, int32);
@@ -31,13 +31,13 @@ protected:
 	UPROPERTY(meta=(BindWidget)) TObjectPtr<UButton> CardButton;
 	UPROPERTY(meta=(BindWidget)) TObjectPtr<UImage> Portrait;
 	UPROPERTY(meta=(BindWidget)) TObjectPtr<UImage> Frame;
-	UPROPERTY(meta=(BindWidget)) TObjectPtr<UTextBlock> NameText;
-	UPROPERTY(meta=(BindWidget)) TObjectPtr<UTextBlock> RoleText;
-	UPROPERTY(meta=(BindWidget)) TObjectPtr<UTextBlock> DescriptionText;
-	UPROPERTY(meta=(BindWidget)) TObjectPtr<UTextBlock> SelectionText;
+	UPROPERTY(meta=(BindWidgetOptional)) TObjectPtr<UImage> Caption;
+	UPROPERTY(meta=(BindWidgetOptional)) TObjectPtr<UImage> ChosenBadge;
 private:
 	void UpdateState();
 	UPROPERTY(Transient) TObjectPtr<UMaterialInstanceDynamic> PortraitInstance;
+	UPROPERTY(Transient) TObjectPtr<UTexture2D> NormalFrame;
+	UPROPERTY(Transient) TObjectPtr<UTexture2D> SelectedFrame;
 	bool bIsSelected = false;
 	int32 CardIndex = INDEX_NONE;
 };

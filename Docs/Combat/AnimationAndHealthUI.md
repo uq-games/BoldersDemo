@@ -19,11 +19,17 @@
 
 ## 血条
 
-沿用已有 ABoldersHUD Canvas 绘制架构；没有额外引入第二套 HUD。两位玩家按 PlayerSlot 排序显示在左上角，通过本地 PlayerController 的 AssignedCharacter 标记 YOU/ALLY。敌方血条按胶囊顶部位置投影到屏幕，离开屏幕或在相机后方时不绘制。死亡显示空血条。
+ABoldersHUD 将队伍血条显示在左上角，按 PlayerSlot 排序，通过本地 PlayerController 的 AssignedCharacter 标记 YOU/ALLY。敌方血条悬浮在角色上方，掉血后显示当前生命和上限，死亡后收起。
 
-生命值与最大生命值直接读取角色 GAS AttributeSet；使用既有属性复制，不再维护独立可写的 UI 生命值。队伍血条颜色与 1P/2P 的青色、金色标记一致，敌方为红色。当前是 demo 的屏幕空间 HUD，未加入墙体遮挡隐藏或大量单位的布局防重叠。
+血量填充和数字直接读取角色 GAS AttributeSet 的 Health 和 MaxHealth。1P 使用青色，2P 使用暖金色，敌方为红色。扣血时，琥珀色残影先停留 0.23 秒，再于 0.42 秒内收至实际血量。残影仅是本地显示状态。
 
-GPT Image 生成的边框导入为 `/Game/BoldersDemo/Assets/UI/Health/T_HealthBarFrame`，在 BP_BoldersHUD 的 HealthBarFrame 上配置。原图与完整提示词见 `ArtSources/UI/README.md`。动态填充和数字由游戏绘制。
+薄边血条和职业图标由 GPT Image 生成，原图在 `ArtSources/UI/CombatHUD`。贴图导入 `/Game/BoldersDemo/Assets/UI/CombatHUD`，由 `BP_BoldersHUD` 配置。动态填充和数字由游戏绘制。
+
+## 职业攻击图标
+
+屏幕底部显示本地角色所属职业的攻击图标。剑盾和普通箭以亮色及底部短金线标记。双手剑、弹射箭、爆炸箭、冰冻箭，以及法师的水、雷、火、冰都是预留项，使用较暗的图标。法师现有魔法弹是通用普攻，元素图标对应后续扩展。
+
+`BP_BoldersHUD` 的 Loadouts 提供每个职业的图集、图标 ID、取图范围和展示状态。攻击图标用于展示，现有攻击输入、武器和技能配置继续使用原来的逻辑。重导入此次美术时运行 `Scripts/Editor/setup_combat_hud.py`。
 
 ## 编辑器工具与验证
 

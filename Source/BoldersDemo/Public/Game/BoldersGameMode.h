@@ -25,6 +25,6 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="Characters")
 	TSubclassOf<AWarriorCharacter> WarriorClass;
 private:
+	void AssignStartingSlot(ABoldersPlayerController& PC);
 	bool SpawnAssignedCharacter(ABoldersPlayerController* PC, TSubclassOf<ABaseCharacter> RequestedClass);
-	TMap<TWeakObjectPtr<AController>, TWeakObjectPtr<AActor>> OccupiedStarts;
 };

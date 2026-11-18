@@ -29,5 +29,9 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Weapon|Ranged")
 	TSubclassOf<AAttackProjectile> ProjectileClass;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Weapon|Ranged")
+	bool bUseWeaponReleasePoint = false;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Weapon|Ranged", meta=(EditCondition="bUseWeaponReleasePoint"))
+	FVector WeaponReleasePoint = FVector::ZeroVector;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Weapon|Ranged", meta=(EditCondition="!bUseWeaponReleasePoint"))
 	FVector ProjectileSpawnOffset = FVector(45.f, 0.f, 20.f);
 };

@@ -2,6 +2,7 @@
 import unreal
 from pathlib import Path
 import shutil
+import runpy
 
 E=unreal.EditorAssetLibrary
 tools=unreal.AssetToolsHelpers.get_asset_tools()
@@ -126,3 +127,7 @@ for rel in ['Blueprints/Shared/BP_BoldersGameMode','Blueprints/Player/BP_Bolders
   c.set_editor_property('selection_widget_class',E.load_blueprint_class(bp_folder+'/WBP_ClassSelection'))
  save(bp)
 print('CLASS_SELECTION_CONFIGURED')
+
+# Apply the current artwork after rebuilding the shared class data and animation blueprints.
+style_script = Path(unreal.Paths.project_dir()) / 'Scripts/Editor/update_class_selection_style.py'
+runpy.run_path(str(style_script.resolve()), run_name="__main__")

@@ -16,6 +16,7 @@
 #include "UI/ClassSelectionWidget.h"
 #include "UI/ClassSelectionData.h"
 #include "Game/BoldersGameMode.h"
+#include "UI/BoldersHUD.h"
 
 void ABoldersPlayerController::BeginPlay()
 {
@@ -35,6 +36,12 @@ void ABoldersPlayerController::BeginPlay()
 			MappingLocalPlayer = LocalPlayer;
 		}
 	}
+	OpenClassSelection();
+}
+
+void ABoldersPlayerController::ReceivedPlayer()
+{
+	Super::ReceivedPlayer();
 	OpenClassSelection();
 }
 
@@ -60,6 +67,13 @@ void ABoldersPlayerController::SetupInputComponent()
 {
 	Super::SetupInputComponent();
 	InputComponent->BindKey(EKeys::Escape, IE_Pressed, this, &ThisClass::ClearSelection);
+	const FKey AttackKeys[] = {EKeys::One, EKeys::Two, EKeys::Three, EKeys::Four};
+	for (int32 Index = 0; Index < UE_ARRAY_COUNT(AttackKeys); ++Index)
+	{
+		FInputKeyBinding Binding(FInputChord(AttackKeys[Index]), IE_Pressed);
+		Binding.KeyDelegate.GetDelegateForManualSet().BindWeakLambda(this, [this, Index] { SelectAttackSlot(Index); });
+		InputComponent->KeyBindings.Add(MoveTemp(Binding));
+	}
 	if (auto* Input = Cast<UEnhancedInputComponent>(InputComponent))
 	{
 		if (CommandClickAction)
@@ -71,6 +85,15 @@ void ABoldersPlayerController::HandleCommandClick()
 {
 	if (IsChoosingClass()) return;
 	if (!IsLocalController()) return;
+	float MouseX, MouseY;
+	if (auto* HUD = GetHUD(); HUD && GetMousePosition(MouseX, MouseY))
+	{
+		if (const auto* Icon = HUD->GetHitBoxAtCoordinates({MouseX, MouseY}, true))
+		{
+			if (!bEnableClickEvents) HUD->NotifyHitBoxClick(Icon->GetName());
+			return;
+		}
+	}
 	FHitResult Hit;
 	if (!GetHitResultUnderCursorByChannel(UEngineTypes::ConvertToTraceType(ECC_Visibility), false, Hit))
 	{
@@ -204,6 +227,7 @@ void ABoldersPlayerController::GetLifetimeReplicatedProps(TArray<FLifetimeProper
 {
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 	DOREPLIFETIME_CONDITION(ABoldersPlayerController, AssignedCharacter, COND_OwnerOnly);
+	DOREPLIFETIME_CONDITION(ABoldersPlayerController, PlayerSlot, COND_OwnerOnly);
 }
 
 void ABoldersPlayerController::ClientMoveFeedback_Implementation(bool bAccepted, FVector Location)
@@ -214,12 +238,38 @@ void ABoldersPlayerController::ClientMoveFeedback_Implementation(bool bAccepted,
 
 void ABoldersPlayerController::ServerRequestAttack_Implementation(ABaseCharacter* Attacker, ABaseCharacter* Target)
 {
- if (IsValid(Attacker) && Attacker == AssignedCharacter) Attacker->Combat->RequestAttack(Target);
+	if (IsValid(Attacker) && Attacker == AssignedCharacter) Attacker->Combat->RequestAttack(Target);
+}
+
+void ABoldersPlayerController::SelectAttackSlot(int32 SlotIndex)
+{
+	if (!IsLocalController() || IsChoosingClass() || !IsValid(AssignedCharacter)) return;
+	const UAttackLoadout* Loadout = AssignedCharacter->Combat->AttackLoadout;
+	if (Loadout && Loadout->Modules.IsValidIndex(SlotIndex)) ServerEquipAttack(Loadout->Modules[SlotIndex].Id);
+}
+
+void ABoldersPlayerController::ServerEquipAttack_Implementation(FName ModuleId)
+{
+	if (IsValid(AssignedCharacter)) AssignedCharacter->Combat->EquipAttack(ModuleId);
+}
+
+void ABoldersPlayerController::SetPlayerSlot(int32 Slot)
+{
+	if (!HasAuthority() || PlayerSlot == Slot) return;
+	PlayerSlot = Slot;
+	OnRep_PlayerSlot();
+	ForceNetUpdate();
+}
+
+void ABoldersPlayerController::OnRep_PlayerSlot()
+{
+	if (PlayerSlot > 0) OpenClassSelection();
 }
 
 void ABoldersPlayerController::OpenClassSelection()
 {
-	if (!IsLocalController() || AssignedCharacter || ClassSelectionScreen || !SelectionCatalog || !SelectionWidgetClass) return;
+	if (!GetLocalPlayer() || (!HasActorBegunPlay() && !IsActorBeginningPlay()) || PlayerSlot <= 0
+		|| AssignedCharacter || ClassSelectionScreen || !SelectionCatalog || !SelectionWidgetClass) return;
 	ClassSelectionScreen=CreateWidget<UClassSelectionWidget>(this,SelectionWidgetClass);
 	if (!ClassSelectionScreen) return;
 	ClassSelectionScreen->SetIsFocusable(true);
