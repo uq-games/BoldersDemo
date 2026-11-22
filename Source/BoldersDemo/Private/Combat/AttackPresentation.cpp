@@ -6,11 +6,11 @@
 #include "Combat/CharacterCombatComponent.h"
 #include "Combat/Weapon.h"
 #include "AttackResolution.h"
-#include "Components/DecalComponent.h"
+#include "AttackFlightParticles.h"
 #include "Components/StaticMeshComponent.h"
-#include "Engine/DecalActor.h"
 #include "Engine/StaticMeshActor.h"
 #include "Engine/World.h"
+#include "GameFramework/ProjectileMovementComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "NiagaraComponent.h"
@@ -72,13 +72,13 @@ namespace
 		return Hit.ImpactPoint;
 	}
 
-	void PlaceGroundMark(const AActor& Source, UMaterialInterface* Material, float Radius, const FVector& Near, float Lifetime)
+	AStaticMeshActor* PlaceGroundMark(const AActor& Source, UMaterialInterface* Material, float Radius, const FVector& Near, float Lifetime)
 	{
-		if (!Material || Radius <= 0.f) return;
+		if (!Material || Radius <= 0.f) return nullptr;
 		FVector Normal = FVector::UpVector;
 		const FVector Ground = FindGroundForVisual(Source, Near, Normal);
 		const float Diameter = Radius * .02f;
-		SpawnSurface(*Source.GetWorld(), PlaneMesh(), Material, Ground + Normal * 5.f,
+		return SpawnSurface(*Source.GetWorld(), PlaneMesh(), Material, Ground + Normal * 5.f,
 			FRotationMatrix::MakeFromZ(Normal).Rotator(), {Diameter, Diameter, 1.f}, Lifetime);
 	}
 
@@ -92,6 +92,27 @@ namespace
 		SpawnSurface(*Source.GetWorld(), PlaneMesh(), Material, Center, Rotation,
 			{FVector::Dist(From, To) * .01, Width * .01, 1.f}, Lifetime);
 	}
+
+	void ScatterShards(UWorld& World, const FAttackModule& Module, const FVector& Center, const FVector& Direction)
+	{
+		if (!Module.ImpactShardMesh || !Module.ImpactShardMaterial) return;
+		for (int32 Index = 0; Index < 6; ++Index)
+		{
+			const FRotator Fan(17.f + 6.f * (Index % 3), Direction.Rotation().Yaw + 60.f * Index, 0.f);
+			const FVector Axis = Fan.Vector();
+			const float Scale = Index % 2 == 0 ? .24f : .16f;
+			auto* Fragment = SpawnSurface(World, Module.ImpactShardMesh, Module.ImpactShardMaterial,
+				Center + Axis * 27.f, Fan, FVector(Scale), .32f + .026f * (Index % 3));
+			if (!Fragment) continue;
+			auto* Movement = NewObject<UProjectileMovementComponent>(Fragment);
+			Movement->SetUpdatedComponent(Fragment->GetRootComponent());
+			Movement->bInitialVelocityInLocalSpace = false;
+			Movement->Velocity = Axis * (118.f + 21.f * Index) + FVector(0, 0, 86.f);
+			Movement->ProjectileGravityScale = .78f;
+			Movement->bRotationFollowsVelocity = true;
+			Movement->RegisterComponent();
+		}
+	}
 }
 
 void AttackPresentation::Play(ABaseCharacter& Source, const FAttackModule& Module, EAttackVisualStage Stage,
@@ -100,35 +121,23 @@ void AttackPresentation::Play(ABaseCharacter& Source, const FAttackModule& Modul
 	UWorld& World = *Source.GetWorld();
 	const FVector Direction = (End - Location).GetSafeNormal();
 	const FVector View = ViewDirection(Source, Location);
-	const bool bMelee = Module.Pattern == EAttackPattern::SingleMelee || Module.Pattern == EAttackPattern::Cleave;
 
 	switch (Stage)
 	{
 	case EAttackVisualStage::Cast:
-		if (bMelee)
-		{
-			const float Reach = (Module.Range + 35.f) * .022f;
-			const bool bCleave = Module.Pattern == EAttackPattern::Cleave;
-			FRotator Facing = Direction.Rotation();
-			Facing.Pitch = bCleave ? 9.f : 6.f;
-			// Lift the edge of the sweep above the target's cap so it reads from the overhead camera.
-			SpawnSurface(World, PlaneMesh(), Module.Cast, Location + FVector(0, 0, bCleave ? 61.f : 47.f), Facing,
-				{Reach, Reach, 1.f}, bCleave ? .48f : .3f);
-		}
-		else
-		{
-			SpawnSurface(World, PlaneMesh(), Module.Cast, Location + View * 8.f,
-				FRotationMatrix::MakeFromXZ(Direction, View).Rotator(), {1.4f, 1.05f, 1.f}, .26f);
-		}
+	{
+		const bool bBow = Module.Pattern == EAttackPattern::Projectile || Module.Pattern == EAttackPattern::Ricochet
+			|| Module.Pattern == EAttackPattern::Freeze || (Module.Pattern == EAttackPattern::Blast && !Module.ProjectileMesh);
+		const float Scale = bBow ? .60f : .93f;
+		SpawnSurface(World, PlaneMesh(), Module.Cast, Location + View * 8.f,
+			FRotationMatrix::MakeFromXZ(Direction, View).Rotator(), {Scale, Scale, 1.f}, bBow ? .15f : .20f);
 		return;
-	case EAttackVisualStage::GroundWarning:
-		PlaceGroundMark(Source, Module.GroundMark, Module.Radius, Location, Module.LaunchDelay);
-		return;
+	}
 	case EAttackVisualStage::Ricochet:
-		DrawBeam(Source, Module.Cast, Location, End, 53.f, .38f);
+		DrawBeam(Source, Module.RicochetLink ? Module.RicochetLink : Module.Cast, Location, End, 40.f, .30f);
 		return;
 	case EAttackVisualStage::SkyImpact:
-		DrawBeam(Source, Module.Cast, Location, End, 236.f, .53f);
+		DrawBeam(Source, Module.Cast, Location, End, 185.f, .28f);
 		break;
 	case EAttackVisualStage::Impact:
 		break;
@@ -140,54 +149,47 @@ void AttackPresentation::Play(ABaseCharacter& Source, const FAttackModule& Modul
 		UNiagaraFunctionLibrary::SpawnSystemAtLocation(&Source, Module.ImpactParticles,
 			Location, Rotation, FVector(Module.Pattern == EAttackPattern::Blast ? 1.2f : .85f));
 	}
-	const double Width = Module.Pattern == EAttackPattern::Blast ? FMath::Max(1.6, Module.Radius * .017) :
-		(Stage == EAttackVisualStage::SkyImpact ? 3.1 : (Module.Pattern == EAttackPattern::Wave ? 2.5 : 1.52));
-	SpawnSurface(World, PlaneMesh(), Module.Impact, Location + View * 16.f,
-		FRotationMatrix::MakeFromZ(View).Rotator(), {Width, Width, 1.f}, Module.Pattern == EAttackPattern::Blast ? .64f : .45f);
+	const double Width = Module.Pattern == EAttackPattern::Blast ? FMath::Max(1.45, Module.Radius * .012) :
+		(Stage == EAttackVisualStage::SkyImpact ? 2.1 : (Module.Pattern == EAttackPattern::Wave ? 1.8 : 1.28));
+	const FVector ImpactCenter = Stage == EAttackVisualStage::SkyImpact ? Location + FVector(0, 0, 28.f) : Location;
+	SpawnSurface(World, PlaneMesh(), Module.Impact, ImpactCenter + View * 8.f,
+		FRotationMatrix::MakeFromZ(View).Rotator(), {Width, Width, 1.f}, Module.Pattern == EAttackPattern::Blast ? .42f : .27f);
+	ScatterShards(World, Module, ImpactCenter, Direction);
 	if (Module.Pattern == EAttackPattern::Blast || Module.Pattern == EAttackPattern::Freeze)
 		PlaceGroundMark(Source, Module.GroundMark, Module.Radius, Location, .55f);
 	if (Module.PressureRing)
 		PlaceGroundMark(Source, Module.PressureRing, Module.Radius, Location, .52f);
 }
 
-AActor* AttackPresentation::PlayWindup(ABaseCharacter& Source, const FAttackModule& Module, float Duration)
+AActor* AttackPresentation::PlayWindup(ABaseCharacter& Source, const FAttackModule& Module, float Duration, const FVector& Aim)
 {
-	if (!Module.Windup) return nullptr;
-	const FVector Ground = AttackResolution::GroundPoint(Source);
-	const FVector Forward = Source.GetActorForwardVector();
+	// The lightning marker runs during the gesture and is cleared at release or cancel.
+	AActor* Visual = Module.Pattern == EAttackPattern::SkyStrike
+		? PlaceGroundMark(Source, Module.GroundMark, Module.Radius, Aim, Duration) : nullptr;
+	const AWeapon* Weapon = Source.Combat->GetWeapon();
+	if (!Weapon || !Module.ImpactParticles) return Visual;
+	if (!Visual)
+	{
+		Visual = Source.GetWorld()->SpawnActor<AActor>();
+		if (!Visual) return nullptr;
+		Visual->SetLifeSpan(Duration);
+	}
 	const bool bCaster = Module.Pattern == EAttackPattern::Wave || Module.Pattern == EAttackPattern::IceLance
 		|| Module.Pattern == EAttackPattern::SkyStrike || (Module.Pattern == EAttackPattern::Blast && Module.ProjectileMesh);
-	FVector Normal = FVector::UpVector;
-	const FVector Center = FindGroundForVisual(Source, Ground + Forward * (bCaster ? 67.f : 53.f), Normal);
-	auto* Mark = Source.GetWorld()->SpawnActor<ADecalActor>();
-	if (!Mark) return nullptr;
-	auto* Glyph = Mark->GetDecal();
-	// Unreal's decal U and V correspond to local Z and Y respectively.
-	Glyph->DecalSize = bCaster ? FVector(18, 142, 160) : FVector(16, 96, 117);
-	Glyph->FadeScreenSize = 0.f;
-	Glyph->SortOrder = 1;
-	Glyph->SetWorldLocationAndRotation(Center + Normal * 2.f, FRotationMatrix::MakeFromXZ(-Normal, Forward).Rotator());
-	Mark->SetDecalMaterial(Module.Windup);
-	Mark->SetActorEnableCollision(false);
-	Mark->SetLifeSpan(Duration);
-	// Keep this presentation actor independent of the character's collision and swept movement.
-	// A caster remains at the channel origin until release or cancels the windup by moving.
-	const AWeapon* Weapon = Source.Combat->GetWeapon();
-	if (Weapon && Module.ImpactParticles)
-	{
-		const FVector Hand = Weapon->bUseWeaponReleasePoint
-			? Weapon->Mesh->GetComponentTransform().TransformPosition(Weapon->WeaponReleasePoint)
-			: Weapon->Mesh->GetComponentLocation();
-		const FVector Focus = Hand + Forward * 26.f + FVector(0, 0, 37.f);
-		auto* Sparks = NewObject<UNiagaraComponent>(Mark);
-		Sparks->SetAsset(Module.ImpactParticles);
-		Sparks->SetupAttachment(Mark->GetRootComponent());
-		Sparks->SetAbsolute(true, true, true);
-		Sparks->SetWorldTransform(FTransform(FRotator(65.f, Forward.Rotation().Yaw, 0.f),
-			Focus, FVector(bCaster ? .54 : .31)));
-		Sparks->RegisterComponent();
-	}
-	return Mark;
+	const FVector Hand = Weapon->bUseWeaponReleasePoint
+		? Weapon->Mesh->GetComponentTransform().TransformPosition(Weapon->WeaponReleasePoint)
+		: Weapon->Mesh->GetComponentLocation();
+	const FVector Forward = Source.GetActorForwardVector();
+	const FVector Focus = Hand + Forward * 26.f + FVector(0, 0, 37.f);
+	auto* Sparks = NewObject<UNiagaraComponent>(Visual);
+	Sparks->SetAsset(Module.ImpactParticles);
+	if (USceneComponent* Root = Visual->GetRootComponent()) Sparks->SetupAttachment(Root);
+	else Visual->SetRootComponent(Sparks);
+	Sparks->SetAbsolute(true, true, true);
+	Sparks->SetWorldTransform(FTransform(FRotator(65.f, Forward.Rotation().Yaw, 0.f),
+		Focus, FVector(bCaster ? .54 : .31)));
+	Sparks->RegisterComponent();
+	return Visual;
 }
 
 void AttackPresentation::PlayReaction(ABaseCharacter& Source, const UElementalReactionAppearance& Appearance,
@@ -234,7 +236,6 @@ void AttackPresentation::ConfigureProjectile(AAttackProjectile& Projectile, cons
 		Mesh->SetRelativeRotation(FRotator::ZeroRotator);
 		Mesh->SetRelativeScale3D(FVector::OneVector);
 		Mesh->SetRelativeLocation(FVector::ZeroVector);
-		if (Module.Pattern == EAttackPattern::Blast) Mesh->SetRelativeScale3D({.58, .51, .51});
 	}
 	else if (!bArrow)
 	{
@@ -242,11 +243,24 @@ void AttackPresentation::ConfigureProjectile(AAttackProjectile& Projectile, cons
 	}
 	if (Module.ProjectileMaterial && !bArrow) Mesh->SetMaterial(0, Module.ProjectileMaterial);
 	if (Module.Pattern == EAttackPattern::Blast || Module.Pattern == EAttackPattern::Wave) Mesh->SetCastShadow(false);
+	for (UStaticMesh* Layer : Module.ProjectileLayers)
+	{
+		if (!Layer) continue;
+		auto* Part = NewObject<UStaticMeshComponent>(&Projectile);
+		SetSurface(*Part, Layer, Layer->GetMaterial(0));
+		Part->SetupAttachment(Mesh);
+		Part->RegisterComponent();
+	}
+	if (Module.FlightParticleMesh)
+	{
+		auto* Emitter = Projectile.GetWorld()->SpawnActor<AAttackFlightParticles>(Projectile.GetActorLocation(), FRotator::ZeroRotator);
+		if (Emitter) Emitter->Initialize(Projectile, *Module.FlightParticleMesh, Module.Pattern == EAttackPattern::Wave);
+	}
 	if (!Module.Trail) return;
 	const bool bWave = Module.Pattern == EAttackPattern::Wave;
-	const float Length = bWave ? 2.5f : (bArrow ? 1.48f : 2.55f);
-	const float Width = bWave ? Module.Radius * .027f : (bArrow ? .44f : 1.13f);
-	const FVector Center(bWave ? -56.f : -Length * 45.f, 0, bWave ? -26.f : 0.f);
+	const float Length = bWave ? 2.35f : (bArrow ? 1.32f : (Module.Pattern == EAttackPattern::Blast ? 2.05f : 1.62f));
+	const float Width = bWave ? Module.Radius * .022f : (bArrow ? .31f : .82f);
+	const FVector Center(bWave ? -53.f : -Length * 50.f, 0, bWave ? -35.f : 0.f);
 	for (int32 Index = 0; Index < (bWave ? 1 : 2); ++Index)
 	{
 		auto* Trail = NewObject<UStaticMeshComponent>(&Projectile);

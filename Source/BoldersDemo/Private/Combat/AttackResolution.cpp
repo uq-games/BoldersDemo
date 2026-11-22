@@ -1,12 +1,10 @@
 #include "AttackResolution.h"
 
 #include "Characters/BaseCharacter.h"
-#include "Combat/CharacterCombatComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/PrimitiveComponent.h"
 #include "Engine/OverlapResult.h"
 #include "Engine/World.h"
-#include "TimerManager.h"
 
 namespace
 {
@@ -205,7 +203,6 @@ void AttackResolution::ReleaseMelee(ABaseCharacter& Source, ABaseCharacter& Targ
 {
 	const FVector Origin = Source.GetActorLocation();
 	const FVector Direction = (Target.GetActorLocation() - Origin).GetSafeNormal2D();
-	Source.MulticastModuleVisual(Module.Id, EAttackVisualStage::Cast, Origin, Origin + Direction * Module.Range);
 
 	TArray<ABaseCharacter*> Victims{ &Target };
 	if (Module.Pattern == EAttackPattern::Cleave)
@@ -226,40 +223,29 @@ void AttackResolution::ReleaseMelee(ABaseCharacter& Source, ABaseCharacter& Targ
 	}
 }
 
-void AttackResolution::WarnSkyStrike(ABaseCharacter& Source, ABaseCharacter& Target, const FAttackModule& Module)
+void AttackResolution::ReleaseSkyStrike(ABaseCharacter& Source, const FAttackModule& Module, const FVector& Aim)
 {
-	const FVector Aim = GroundPoint(Target);
-	const FName Id = Module.Id;
-	Source.MulticastModuleVisual(Id, EAttackVisualStage::GroundWarning, Aim, Aim);
-	auto Strike = FTimerDelegate::CreateWeakLambda(&Source, [&Source, Aim, Id]
+	// Trace from above the impact site. An overhang can shield the units below.
+	const FVector Sky = Aim + FVector(0, 0, 980);
+	FCollisionQueryParams Params(SCENE_QUERY_STAT(SkyStrike), false, &Source);
+	FHitResult Roof;
+	const FCollisionObjectQueryParams WorldObjects(ECC_TO_BITFIELD(ECC_WorldStatic) | ECC_TO_BITFIELD(ECC_WorldDynamic));
+	const bool bCovered = Source.GetWorld()->LineTraceSingleByObjectType(Roof, Sky, Aim, WorldObjects, Params);
+	const FVector Endpoint = bCovered ? Roof.ImpactPoint + FVector(0, 0, 4) : Aim;
+	Source.MulticastModuleVisual(Module.Id, EAttackVisualStage::SkyImpact, Endpoint, Sky);
+	if (bCovered) return;
+	const FVector Center = Aim + FVector(0, 0, 48);
+	TArray<ABaseCharacter*> Victims;
+	FElementalHitBatch Batch;
+	for (ABaseCharacter* Victim : FindTargets(Source, Center, Module.Radius))
 	{
-		if (!Source.IsAlive()) return;
-		const FAttackModule* Attack = Source.Combat->FindModule(Id);
-		if (!Attack) return;
-		// Trace from above the impact site. An overhang can shield the units below.
-		const FVector Sky = Aim + FVector(0, 0, 980);
-		FCollisionQueryParams Params(SCENE_QUERY_STAT(SkyStrike), false, &Source);
-		FHitResult Roof;
-		const FCollisionObjectQueryParams WorldObjects(ECC_TO_BITFIELD(ECC_WorldStatic) | ECC_TO_BITFIELD(ECC_WorldDynamic));
-		const bool bCovered = Source.GetWorld()->LineTraceSingleByObjectType(Roof, Sky, Aim, WorldObjects, Params);
-		const FVector Endpoint = bCovered ? Roof.ImpactPoint + FVector(0, 0, 4) : Aim;
-		Source.MulticastModuleVisual(Id, EAttackVisualStage::SkyImpact, Endpoint, Sky);
-		if (bCovered) return;
-		const FVector Center = Aim + FVector(0, 0, 48);
-		TArray<ABaseCharacter*> Victims;
-		FElementalHitBatch Batch;
-		for (ABaseCharacter* Victim : FindTargets(Source, Center, Attack->Radius))
+		const FVector Offset = Victim->GetActorLocation() - Center;
+		if (Offset.SizeSquared2D() <= FMath::Square(Module.Radius)
+			&& FMath::Abs(Offset.Z) <= 105.f && HasClearPath(Source, *Victim, Center))
 		{
-			const FVector Offset = Victim->GetActorLocation() - Center;
-			if (Offset.SizeSquared2D() <= FMath::Square(Attack->Radius)
-				&& FMath::Abs(Offset.Z) <= 105.f && HasClearPath(Source, *Victim, Center))
-			{
-				Victims.Add(Victim);
-				Batch.DirectTargets.Add(Victim);
-			}
+			Victims.Add(Victim);
+			Batch.DirectTargets.Add(Victim);
 		}
-		for (ABaseCharacter* Victim : Victims) ApplyHit(Source, *Victim, *Attack, Attack->Damage, &Batch);
-	});
-	FTimerHandle Handle;
-	Source.GetWorldTimerManager().SetTimer(Handle, Strike, FMath::Max(.05f, Module.LaunchDelay), false);
+	}
+	for (ABaseCharacter* Victim : Victims) ApplyHit(Source, *Victim, Module, Module.Damage, &Batch);
 }

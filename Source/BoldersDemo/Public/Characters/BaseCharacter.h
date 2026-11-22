@@ -53,12 +53,13 @@ public:
 	// Local presentation only; does not change selection or gameplay authority.
 	UPROPERTY(EditDefaultsOnly, Category="Combat|Presentation") TObjectPtr<UMaterialInterface> SwingMaterial;
 	UPROPERTY(EditDefaultsOnly, Category="Combat|Presentation") TObjectPtr<UMaterialInterface> ImpactMaterial;
+	UPROPERTY(EditDefaultsOnly, Category="Combat|Presentation") TObjectPtr<UStaticMesh> FrozenVisualMesh;
 	UFUNCTION(NetMulticast, Unreliable) void MulticastAttackVisual(FVector_NetQuantize Location, FRotator Facing, bool bImpact);
 	UFUNCTION(NetMulticast, Unreliable) void MulticastModuleVisual(FName ModuleId, EAttackVisualStage Stage,
 		FVector_NetQuantize Location, FVector_NetQuantize End);
 	UFUNCTION(NetMulticast, Unreliable) void MulticastElementalReaction(EElementalReaction Reaction,
 		FVector_NetQuantize Location, FVector_NetQuantize End);
-	UFUNCTION(NetMulticast, Unreliable) void MulticastModuleWindup(FName ModuleId, float Duration);
+	UFUNCTION(NetMulticast, Unreliable) void MulticastModuleWindup(FName ModuleId, float Duration, FVector_NetQuantize Aim);
 	void SetHoverOutline(bool bEnabled, bool bSelected = false);
 	// Accepted does not mean arrived. Only the server may execute this request.
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="Character|Movement")
@@ -99,4 +100,5 @@ protected:
 	UPROPERTY(EditDefaultsOnly, Category="Combat|Resistance", meta=(ClampMin="-.75", ClampMax=".9"))
 	float LightningResistance = 0.f;
 	UPROPERTY(Transient) TWeakObjectPtr<AActor> LocalWindupVisual;
+	UPROPERTY(Transient) TObjectPtr<UStaticMeshComponent> LocalFrozenVisual;
 };

@@ -10,7 +10,7 @@ public class BoldersDemo : ModuleRules
 	
 		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "AIModule", "GameplayAbilities", "GameplayTags", "GameplayTasks", "UMG" });
 
-		PrivateDependencyModuleNames.AddRange(new string[] { "NavigationSystem", "Niagara", "SlateCore", "Slate" });
+		PrivateDependencyModuleNames.AddRange(new string[] { "NavigationSystem", "Niagara", "ProceduralMeshComponent", "SlateCore", "Slate" });
 		if (Target.bBuildEditor)
 		{
 			PrivateDependencyModuleNames.AddRange(new string[] { "UnrealEd", "AnimGraph", "AnimGraphRuntime", "BlueprintGraph", "AssetTools", "EditorScriptingUtilities", "UMGEditor" });

@@ -76,6 +76,9 @@ void ABaseCharacter::BeginPlay()
 	Super::BeginPlay();
 	ApplyAnimationBlueprint();
 	AbilitySystemComponent->InitAbilityActorInfo(this, this);
+	AbilitySystemComponent->RegisterGameplayTagEvent(TAG_State_Frozen, EGameplayTagEventType::NewOrRemoved)
+		.AddUObject(this, &ThisClass::HandleFrozenChanged);
+	if (IsFrozen()) HandleFrozenChanged(TAG_State_Frozen, 1);
 	if (HasAuthority())
 	{
 		AbilitySystemComponent->SetNumericAttributeBase(UBoldersAttributeSet::GetMaxHealthAttribute(), InitialMaxHealth);
@@ -86,8 +89,6 @@ void ABaseCharacter::BeginPlay()
 		AbilitySystemComponent->SetNumericAttributeBase(UBoldersAttributeSet::GetWaterResistanceAttribute(), WaterResistance);
 		AbilitySystemComponent->SetNumericAttributeBase(UBoldersAttributeSet::GetLightningResistanceAttribute(), LightningResistance);
 		Combat->GrantBasicAttack();
-		AbilitySystemComponent->RegisterGameplayTagEvent(TAG_State_Frozen, EGameplayTagEventType::NewOrRemoved)
-			.AddUObject(this, &ThisClass::HandleFrozenChanged);
 		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(UBoldersAttributeSet::GetHealthAttribute())
 			.AddUObject(this, &ThisClass::HandleHealthChanged);
 	}
@@ -194,7 +195,28 @@ void ABaseCharacter::ApplyCombatImpulse(const FVector& VelocityChange)
 
 void ABaseCharacter::HandleFrozenChanged(const FGameplayTag Tag, int32 Count)
 {
-	if (Count <= 0) return;
+	if (GetNetMode() != NM_DedicatedServer)
+	{
+		if (Count > 0 && FrozenVisualMesh && !LocalFrozenVisual)
+		{
+			LocalFrozenVisual = NewObject<UStaticMeshComponent>(this, TEXT("FrozenCrystalCrown"));
+			LocalFrozenVisual->SetupAttachment(GetRootComponent());
+			LocalFrozenVisual->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+			LocalFrozenVisual->SetCanEverAffectNavigation(false);
+			LocalFrozenVisual->SetCastShadow(false);
+			LocalFrozenVisual->SetStaticMesh(FrozenVisualMesh);
+			const float Radius = GetCapsuleComponent()->GetUnscaledCapsuleRadius();
+			LocalFrozenVisual->SetRelativeLocation(FVector(0, 0, -GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight()));
+			LocalFrozenVisual->SetRelativeScale3D(FVector(Radius / 42.f));
+			LocalFrozenVisual->RegisterComponent();
+		}
+		else if (Count <= 0 && LocalFrozenVisual)
+		{
+			LocalFrozenVisual->DestroyComponent();
+			LocalFrozenVisual = nullptr;
+		}
+	}
+	if (Count <= 0 || !HasAuthority()) return;
 	Combat->CancelAttack();
 	if (auto* AI = Cast<ABoldersAIController>(GetController())) AI->StopMovement();
 	GetCharacterMovement()->StopMovementImmediately();
@@ -216,14 +238,14 @@ void ABaseCharacter::MulticastElementalReaction_Implementation(EElementalReactio
 		AttackPresentation::PlayReaction(*this, *Appearance, Reaction, Location, End);
 }
 
-void ABaseCharacter::MulticastModuleWindup_Implementation(FName ModuleId, float Duration)
+void ABaseCharacter::MulticastModuleWindup_Implementation(FName ModuleId, float Duration, FVector_NetQuantize Aim)
 {
 	if (GetNetMode() == NM_DedicatedServer) return;
 	if (LocalWindupVisual.IsValid()) LocalWindupVisual->Destroy();
 	LocalWindupVisual.Reset();
 	if (Duration <= 0.f) return;
 	if (const FAttackModule* Module = Combat->FindModule(ModuleId))
-		LocalWindupVisual = AttackPresentation::PlayWindup(*this, *Module, Duration);
+		LocalWindupVisual = AttackPresentation::PlayWindup(*this, *Module, Duration, Aim);
 }
 
 void ABaseCharacter::HandleHealthChanged(const FOnAttributeChangeData& Data)

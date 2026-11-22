@@ -409,7 +409,7 @@ def apply():
             trail=material("WaterWake", WAKE, WATER, "loop"), cast=material("WaterRelease", CAST, WATER),
             impact=burst("FoamSplash", WATER, 5, 1.1), impact_particles=particles["Foam"]),
         new("Lightning", "落雷", "LIGHTNING", "SKY_STRIKE", 38., 780., 4.8, [montage("Mage", "SkyStrike")],
-            radius=166., launch_delay=.72, ground_mark=material("ThunderWarning", GROUND, THUNDER),
+            radius=166., ground_mark=material("ThunderWarning", GROUND, THUNDER),
             cast=material("ThunderBolt", BEAM, THUNDER), impact=burst("ThunderImpact", THUNDER, 8, 1.8),
             impact_particles=particles["Thunder"]),
         new("Ice", "冰锥", "ICE", "ICE_LANCE", 34., 790., 2.9, [montage("Mage", "IceLance")],

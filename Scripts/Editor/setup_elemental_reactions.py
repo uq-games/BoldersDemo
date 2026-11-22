@@ -12,20 +12,6 @@ EFFECTS = SETUP["EFFECTS"]
 COMBAT = SETUP["COMBAT"]
 E, M, TOOLS = SETUP["E"], SETUP["M"], SETUP["TOOLS"]
 load, save, make, material = (SETUP[name] for name in ("load", "save", "make", "material"))
-GOLD, STEEL, GREEN, EMBER, FIRE, ICE, WATER, THUNDER = (
-    SETUP[name] for name in ("GOLD", "STEEL", "GREEN", "EMBER", "FIRE", "ICE", "WATER", "THUNDER"))
-
-WINDUP = """
-float2 p=(UV-.5)*2;
-float r=length(p), a=atan2(p.y,p.x);
-float t=frac(Clock*.92);
-float angular=.66+.34*cos(a-Clock*4.8);
-float outer=exp(-abs(r-.76)*33)*(.48+.52*pow(saturate(cos(a*8)),4));
-float count=exp(-abs(r-lerp(.61,.31,t))*21)*sin(t*3.14159);
-float glyph=GLYPH;
-float direction=exp(-abs(abs(a)-.27)*21)*exp(-abs(r-.88)*19)*step(0,p.x);
-return saturate(outer*angular+glyph*.87+count*.42+direction*.9);
-"""
 
 REACTION_RING = """
 float2 p=(UV-.5)*2; float r=length(p), a=atan2(p.y,p.x);
@@ -56,32 +42,6 @@ float bloom=exp(-abs(v-a)*7);
 float pulse=.75+.25*sin(u*28+24*t);
 return (TINT*(2.8*bloom)+float3(5.8,6.2,7)*filament)*sin(3.14159*u)*pulse*pow(1-t,1.35);
 """
-
-
-def windup_decal(name, tint, glyph):
-    asset = make("M_" + name + "Windup", EFFECTS, u.Material, u.MaterialFactoryNew())
-    asset.set_editor_property("blend_mode", u.BlendMode.BLEND_TRANSLUCENT)
-    asset.set_editor_property("material_domain", u.MaterialDomain.MD_DEFERRED_DECAL)
-    M.delete_all_material_expressions(asset)
-    uv = M.create_material_expression(asset, u.MaterialExpressionTextureCoordinate, -470, 0)
-    clock = M.create_material_expression(asset, u.MaterialExpressionTime, -470, 120)
-    shape = M.create_material_expression(asset, u.MaterialExpressionCustom, -230, 0)
-    pins = []
-    for name in ("UV", "Clock"):
-        pin = u.CustomInput()
-        pin.set_editor_property("input_name", name)
-        pins.append(pin)
-    shape.set_editor_property("inputs", pins)
-    shape.set_editor_property("output_type", u.CustomMaterialOutputType.CMOT_FLOAT1)
-    shape.set_editor_property("code", WINDUP.replace("GLYPH", glyph))
-    color = M.create_material_expression(asset, u.MaterialExpressionConstant3Vector, -215, 180)
-    color.set_editor_property("constant", u.LinearColor(*(2.8 * channel for channel in tint), 1.))
-    assert M.connect_material_expressions(uv, "", shape, "UV")
-    assert M.connect_material_expressions(clock, "", shape, "Clock")
-    assert M.connect_material_property(shape, "", u.MaterialProperty.MP_OPACITY)
-    assert M.connect_material_property(color, "", u.MaterialProperty.MP_EMISSIVE_COLOR)
-    M.recompile_material(asset)
-    return save(asset)
 
 
 def author_reactions():
@@ -118,18 +78,6 @@ def author_reactions():
 
 
 def author_loadouts(reactions):
-    windups = {
-        "SwordShield": (GOLD, "exp(-abs(abs(a)-.53)*21)*exp(-abs(r-.57)*11)"),
-        "Greatsword": (STEEL, "exp(-abs(r-.51-.11*cos(a))*29)*smoothstep(-.6,.7,cos(a))"),
-        "NormalArrow": (GOLD, "exp(-abs(p.y)*26)*smoothstep(.04,.42,p.x)*smoothstep(.9,.46,p.x)"),
-        "RicochetArrow": (GREEN, "exp(-abs(p.y-.22*sin(p.x*13))*24)*smoothstep(.0,.48,p.x)"),
-        "ExplosiveArrow": (EMBER, "exp(-abs(r-.43)*26)*pow(saturate(cos(a*4+t*7)),4)"),
-        "FreezingArrow": (ICE, "pow(saturate(cos(a*6)),12)*smoothstep(.56,.20,r)"),
-        "Fire": (FIRE, "exp(-abs(r-.42-.09*sin(6*a-t*15))*22)*(1.+.35*cos(5*a))"),
-        "Water": (WATER, "exp(-abs(p.x-.22-.33*p.y*p.y)*24)*smoothstep(.66,.23,abs(p.y))"),
-        "Lightning": (THUNDER, "exp(-abs(p.y-.20*sin(21*p.x+t*8))*22)*smoothstep(.7,.25,abs(p.x))"),
-        "Ice": (ICE, "exp(-abs(r-(.36+.075*cos(6*a)))*36)+pow(saturate(cos(a*6)),15)*smoothstep(.45,.10,r)"),
-    }
     pushes = {"Greatsword": 185., "ExplosiveArrow": 970., "Fire": 770., "Water": 195.}
     pressure = {
         "ExplosiveArrow": material("ArrowPressureFront", REACTION_RING.replace("SEGMENTS", "11"), (.98,.31,.12)),
@@ -141,8 +89,6 @@ def author_loadouts(reactions):
         modules = []
         for module in asset.get_editor_property("modules"):
             name = str(module.get_editor_property("id"))
-            color, glyph = windups[name]
-            module.set_editor_property("windup", windup_decal(name, color, glyph))
             if name in pushes:
                 module.set_editor_property("impact_push", pushes[name])
             if name in pressure:
@@ -152,7 +98,6 @@ def author_loadouts(reactions):
         asset.set_editor_property("reaction_appearance", reactions)
         save(asset)
         written = asset.get_editor_property("modules")
-        assert all(x.get_editor_property("windup") for x in written)
         assert all(abs(x.get_editor_property("impact_push") - pushes[str(x.get_editor_property("id"))]) < .01
                    for x in written if str(x.get_editor_property("id")) in pushes)
         u.log(f"ELEMENTAL_REACTION_LOADOUT {role} {len(modules)}")

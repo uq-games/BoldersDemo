@@ -26,7 +26,7 @@ enum class EAttackPattern : uint8
 UENUM()
 enum class EAttackVisualStage : uint8
 {
-	Cast, Impact, GroundWarning, SkyImpact, Ricochet
+	Cast, Impact, SkyImpact, Ricochet
 };
 
 USTRUCT(BlueprintType)
@@ -43,7 +43,6 @@ struct FAttackModule
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Numbers", meta=(ClampMin="0")) float Radius = 0.f;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Numbers", meta=(ClampMin="0")) float Speed = 1500.f;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Numbers", meta=(ClampMin="0")) float Cooldown = 1.f;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Numbers", meta=(ClampMin="0")) float LaunchDelay = .65f;
 	// Peak horizontal velocity imparted by this attack's pressure at its center (cm/s).
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Numbers", meta=(ClampMin="0", ClampMax="1200"))
 	float ImpactPush = 0.f;
@@ -56,11 +55,16 @@ struct FAttackModule
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Projectile") TObjectPtr<UStaticMesh> ProjectileMesh;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Projectile") TObjectPtr<UMaterialInterface> ProjectileMaterial;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Presentation") TObjectPtr<UMaterialInterface> Trail;
+	// Visual-only pieces with their own material slots, sharing the projectile's local origin.
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Presentation") TArray<TObjectPtr<UStaticMesh>> ProjectileLayers;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Presentation") TObjectPtr<UStaticMesh> FlightParticleMesh;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Presentation") TObjectPtr<UMaterialInterface> Impact;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Presentation") TObjectPtr<UMaterialInterface> GroundMark;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Presentation") TObjectPtr<UMaterialInterface> Cast;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Presentation") TObjectPtr<UMaterialInterface> RicochetLink;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Presentation") TObjectPtr<UStaticMesh> ImpactShardMesh;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Presentation") TObjectPtr<UMaterialInterface> ImpactShardMaterial;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Presentation") TObjectPtr<UNiagaraSystem> ImpactParticles;
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Presentation") TObjectPtr<UMaterialInterface> Windup;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Presentation") TObjectPtr<UMaterialInterface> PressureRing;
 };
 

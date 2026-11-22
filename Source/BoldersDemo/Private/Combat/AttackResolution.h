@@ -24,5 +24,5 @@ namespace AttackResolution
 	TArray<ABaseCharacter*> FindTargets(ABaseCharacter& Source, const FVector& Origin, float Radius);
 	FVector GroundPoint(const ABaseCharacter& Character);
 	void ReleaseMelee(ABaseCharacter& Source, ABaseCharacter& Target, const FAttackModule& Module);
-	void WarnSkyStrike(ABaseCharacter& Source, ABaseCharacter& Target, const FAttackModule& Module);
+	void ReleaseSkyStrike(ABaseCharacter& Source, const FAttackModule& Module, const FVector& Aim);
 }

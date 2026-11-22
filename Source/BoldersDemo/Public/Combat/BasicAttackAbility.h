@@ -35,5 +35,6 @@ private:
 	UPROPERTY(Transient) TWeakObjectPtr<ABaseCharacter> Target;
 	UPROPERTY(Transient) TWeakObjectPtr<AWeapon> Weapon;
 	FName ModuleId;
+	FVector SkyStrikeAim = FVector::ZeroVector;
 	bool bHitPending = false;
 };

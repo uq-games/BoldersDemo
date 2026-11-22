@@ -5,6 +5,7 @@
 #include "Abilities/Tasks/AbilityTask_WaitGameplayEvent.h"
 #include "Animation/AnimMontage.h"
 #include "Characters/BaseCharacter.h"
+#include "Combat/AnimNotify_AttackHit.h"
 #include "Combat/AttackPositionRules.h"
 #include "Combat/CharacterCombatComponent.h"
 #include "Combat/Weapon.h"
@@ -74,12 +75,27 @@ void UBasicAttackAbility::StartMontage()
 	Attacker->SetActorRotation(Direction.Rotation());
 	Attacker->Combat->CommitAttackCooldown();
 	bHitPending = true;
-	if (const FAttackModule* Module = GetModule(); Module && Module->Windup)
-		Attacker->MulticastModuleWindup(ModuleId, FMath::Clamp(Montage->GetPlayLength(), .45f, 3.f));
+	float StartTime = 0.f;
+	if (const FAttackModule* Module = GetModule())
+	{
+		// Keep the final preparation and contact poses at their authored speed.
+		const auto* Release = Montage->Notifies.FindByPredicate([](const FAnimNotifyEvent& Event)
+		{
+			return Event.Notify && Event.Notify->IsA<UAnimNotify_AttackHit>();
+		});
+		const float Rate = FMath::Max(Montage->RateScale, UE_SMALL_NUMBER);
+		const float Lead = Module->Pattern == EAttackPattern::SingleMelee ? .24f : .30f;
+		const float ReleaseTime = Release ? Release->GetTriggerTime() : 0.f;
+		StartTime = FMath::Max(0.f, ReleaseTime - Lead * Rate);
+		if (Module->Pattern == EAttackPattern::SkyStrike)
+			SkyStrikeAim = AttackResolution::GroundPoint(*Target.Get());
+		Attacker->MulticastModuleWindup(ModuleId, (ReleaseTime - StartTime) / Rate + .05f, SkyStrikeAim);
+	}
 	auto* EventTask = UAbilityTask_WaitGameplayEvent::WaitGameplayEvent(this, TAG_Event_AttackHit, nullptr, true, true);
 	EventTask->EventReceived.AddDynamic(this, &ThisClass::OnHitEvent);
 	EventTask->ReadyForActivation();
-	auto* MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, Montage);
+	auto* MontageTask = UAbilityTask_PlayMontageAndWait::CreatePlayMontageAndWaitProxy(this, NAME_None, Montage,
+		1.f, NAME_None, true, 1.f, StartTime);
 	MontageTask->OnCompleted.AddDynamic(this, &ThisClass::OnMontageComplete);
 	MontageTask->OnInterrupted.AddDynamic(this, &ThisClass::OnMontageInterrupted);
 	MontageTask->OnCancelled.AddDynamic(this, &ThisClass::OnMontageInterrupted);
@@ -89,10 +105,9 @@ void UBasicAttackAbility::OnHitEvent(FGameplayEventData Payload)
 {
 	if (!bHitPending) return;
 	bHitPending = false;
-	if (const FAttackModule* Module = GetModule(); Module && Module->Windup)
-		Attacker->MulticastModuleWindup(ModuleId, 0.f);
-	if (!IsTargetInReach()) return;
 	const FAttackModule* Module = GetModule();
+	if (Module) Attacker->MulticastModuleWindup(ModuleId, 0.f, FVector::ZeroVector);
+	if (!IsTargetInReach()) return;
 	if (Module && (Module->Pattern == EAttackPattern::SingleMelee || Module->Pattern == EAttackPattern::Cleave))
 	{
 		AttackResolution::ReleaseMelee(*Attacker.Get(), *Target.Get(), *Module);
@@ -100,15 +115,13 @@ void UBasicAttackAbility::OnHitEvent(FGameplayEventData Payload)
 	}
 	if (Module && Module->Pattern == EAttackPattern::SkyStrike)
 	{
-		AttackResolution::WarnSkyStrike(*Attacker.Get(), *Target.Get(), *Module);
+		AttackResolution::ReleaseSkyStrike(*Attacker.Get(), *Module, SkyStrikeAim);
 		return;
 	}
 	const TSubclassOf<AAttackProjectile> ProjectileClass = Module ? Module->ProjectileClass : Weapon->ProjectileClass;
 	if (!ProjectileClass)
 	{
 		if (Module) return;
-		// Centre the sweep at the animated weapon hand so crouching and turning move the arc with the blade.
-		Attacker->MulticastAttackVisual(Weapon->Mesh->GetComponentLocation(), Attacker->GetActorRotation(), false);
 		Target->ReceiveDamageFrom(Attacker.Get(), Weapon->Damage);
 		return;
 	}
@@ -149,12 +162,12 @@ void UBasicAttackAbility::Finish(bool bCancelled)
 void UBasicAttackAbility::EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
 	const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled)
 {
-	if (bHitPending && Attacker.IsValid() && Attacker->HasAuthority())
-		if (const FAttackModule* Module = GetModule(); Module && Module->Windup)
-			Attacker->MulticastModuleWindup(ModuleId, 0.f);
+	if (bHitPending && Attacker.IsValid() && Attacker->HasAuthority() && GetModule())
+		Attacker->MulticastModuleWindup(ModuleId, 0.f, FVector::ZeroVector);
 	bHitPending = false;
 	if (Attacker.IsValid() && Attacker->HasAuthority()) Attacker->AttackPositioning->Cancel();
 	Attacker.Reset(); Target.Reset(); Weapon.Reset();
 	ModuleId = NAME_None;
+	SkyStrikeAim = FVector::ZeroVector;
 	Super::EndAbility(Handle, ActorInfo, ActivationInfo, bReplicateEndAbility, bWasCancelled);
 }

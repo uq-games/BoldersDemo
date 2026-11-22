@@ -6,6 +6,9 @@
 class UStaticMeshComponent;
 class UAnimMontage;
 class AAttackProjectile;
+class AWarriorBladeTrail;
+class UAnimNotifyState_WeaponTrail;
+class USkeletalMeshComponent;
 
 // A weapon supplies appearance and attack configuration; the character executes combat.
 UCLASS()
@@ -14,6 +17,8 @@ class BOLDERSDEMO_API AWeapon : public AActor
 	GENERATED_BODY()
 public:
 	AWeapon();
+	void StartBladeTrail(USkeletalMeshComponent& Pose, const UAnimNotifyState_WeaponTrail& Style);
+	void StopBladeTrail(const UAnimNotifyState_WeaponTrail& Style);
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Weapon")
 	TObjectPtr<UStaticMeshComponent> Mesh;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Weapon")
@@ -34,4 +39,7 @@ public:
 	FVector WeaponReleasePoint = FVector::ZeroVector;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Weapon|Ranged", meta=(EditCondition="!bUseWeaponReleasePoint"))
 	FVector ProjectileSpawnOffset = FVector(45.f, 0.f, 20.f);
+
+private:
+	TWeakObjectPtr<AWarriorBladeTrail> BladeTrail;
 };
