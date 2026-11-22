@@ -29,11 +29,11 @@ ABoldersHUD 将队伍血条显示在左上角，按 PlayerSlot 排序，通过�
 
 屏幕底部显示本地角色所属职业的攻击图标。剑盾和普通箭以亮色及底部短金线标记。双手剑、弹射箭、爆炸箭、冰冻箭，以及法师的水、雷、火、冰都是预留项，使用较暗的图标。法师现有魔法弹是通用普攻，元素图标对应后续扩展。
 
-`BP_BoldersHUD` 的 Loadouts 提供每个职业的图集、图标 ID、取图范围和展示状态。攻击图标用于展示，现有攻击输入、武器和技能配置继续使用原来的逻辑。重导入此次美术时运行 `Scripts/Editor/setup_combat_hud.py`。
+`BP_BoldersHUD` 的 Loadouts 提供每个职业的图集、图标 ID、取图范围和展示状态。攻击图标用于展示，现有攻击输入、武器和技能配置继续使用原来的逻辑。重导入此次美术时运行 `Scripts/Editor/UI/Combat/setup_combat_hud.py`。
 
 ## 编辑器工具与验证
 
-`Bolders.BuildMushroomAnimation` 创建缺失的项目动画资产；已有动画图不会自动覆盖。`Scripts/Editor/setup_character_animation_health.py` 配置角色默认类、地图 Mesh 动画模式、导入 UI 贴图并保存。蘑菇编辑器预览仍保留 PostRegisterAllComponents 的即时骨骼刷新修复。
+`Bolders.BuildMushroomAnimation` 创建缺失的项目动画资产；已有动画图不会自动覆盖。`Scripts/Editor/Characters/Animation/setup_character_animation_health.py` 配置角色默认类、地图 Mesh 动画模式、导入 UI 贴图并保存。蘑菇编辑器预览仍保留 PostRegisterAllComponents 的即时骨骼刷新修复。
 
 2026-11-17：Editor Development 编译通过；双人 PIE 通过客户端真实 ServerRequestAttack RPC，第一刀后等待六秒，两端均保持 80/100 且无攻击 Montage；后续四条命令依次为 60、40、20、0。服务器和客户端均采样到受击 Montage，死亡后 bDead=true，画面中蘑菇倒地。测试世界对两个玩家分别施加伤害后，两端均为 75/100、60/100，客户端画面验证本人标识为 2P/YOU，两个血条长度与数值一致。
 

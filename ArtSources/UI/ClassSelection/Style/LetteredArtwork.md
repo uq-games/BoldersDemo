@@ -8,7 +8,7 @@
 - `ClassCaptions.png` 是 GPT Image 生成的双语职业名图集。中文沿用暖白宋体风格，英文以较小的衬线大写呈现在下方。两行在同一张贴图上居中对齐。
 - `PlainNormal.png` 和 `PlainSelected.png` 是去掉定位铭牌与分隔线的卡片底图。
 
-在 UE 中运行 `Scripts/Editor/update_class_selection_style.py` 可重导入并重新应用。替换图集后需要核对 `ClassSelectionSetup.cpp` 的取图范围与脚本里的职业名称取图范围。
+在 UE 中运行 `Scripts/Editor/UI/ClassSelection/update_class_selection_style.py` 可重导入并重新应用。替换图集后需要核对 `ClassSelectionSetup.cpp` 的取图范围与脚本里的职业名称取图范围。
 
 ## Labels
 

@@ -65,7 +65,7 @@ Ability 的授予仍发生在服务器初始化 ASC 后。`DA_ArcherAbilities` �
 
 ## 维护
 
-`Bolders.BuildRangedAnimation` 创建缺失的动画资产，已有攻击 Montage 保留美术调整的通知时间。`Scripts/Editor/setup_ranged_characters.py` 配置角色、武器、技能与演示职业；重新运行会重新应用脚本中的默认数值和职业数组。
+`Bolders.BuildRangedAnimation` 创建缺失的动画资产，已有攻击 Montage 保留美术调整的通知时间。`Scripts/Editor/Characters/Animation/setup_ranged_characters.py` 配置角色、武器、技能与演示职业；重新运行会重新应用脚本中的默认数值和职业数组。
 
 ## 本次验证
 

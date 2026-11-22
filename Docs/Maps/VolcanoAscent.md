@@ -21,7 +21,7 @@
 
 ## 编辑与重建
 
-调场地时可直接修改关卡内的 Actor。地图生成使用 `Scripts/Editor/model_volcano_ascent.py` 和 `Scripts/Editor/build_volcano_ascent.py`。前者在 Blender 后台运行，将网格导出到 `Saved/VolcanoAscent/Geometry`，并从同级的 `nature-kit`、`castle-kit` 解包目录制作导入用 FBX。后者在完整的 UE 编辑器中运行并重新布置带有 `VolcanoAscentGenerated` 标签的 Actor。手动改过的场地应在重跑前复制备份。
+调场地时可直接修改关卡内的 Actor。地图生成使用 `Scripts/Blender/Maps/model_volcano_ascent.py` 和 `Scripts/Editor/Maps/build_volcano_ascent.py`。前者在 Blender 后台运行，将网格导出到 `Saved/VolcanoAscent/Geometry`，并从同级的 `nature-kit`、`castle-kit` 解包目录制作导入用 FBX。后者在完整的 UE 编辑器中运行并重新布置带有 `VolcanoAscentGenerated` 标签的 Actor。手动改过的场地应在重跑前复制备份。
 
 修改可走地面或坡道后，执行编辑器的 Build Paths 并保存地图。可走地面需要保留 `WalkableGround` Actor 标签并阻挡 `Visibility`。熔岩和远景布景保持在角色的可走范围之外。
 

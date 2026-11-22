@@ -6,7 +6,7 @@
 - `M_HoverOutline` 为本项目新建后处理材质，Stencil 200 黄色 / 201 红色外轮廓、2 像素邻域，并检查遮挡；没有复制参考项目的 GAS、接口或角色架构。TestMap 中 `HoverOutline` 无边界后处理体积引用它；渲染配置 `r.CustomDepth=3`。
 - 2026-11-17 修正描边合成顺序：从 `Scene Color After Tonemapping` 移到 `Scene Color Before DOF`，使 CustomDepth/Stencil 的逐帧采样偏移与场景一起经过 TSR/TAA，避免将未稳定的轮廓叠加到已经稳定的画面上。UE 5.9 的 `Before Bloom` 仍位于时间上采样之后，不适用于此修复。保留默认 CustomDepth jitter，使其与用于遮挡判断的 SceneDepth 对齐。
 - 本次只读对照 `G:/UE5/Nekos496_learn_cpp`：C++ 中未找到鼠标悬停 CustomDepth 实现；`CiciToonCharacterShaderPak/Stage/Materials/M_Outline` 与 `BackGroundMMD/Materials/M_AvaterOutline` 资产包含 Masked / WorldPositionOffset 外扩描边设置，属于不同的材质方案，没有直接移植。修复保留当前本地悬停、弱引用清理、武器描边和控制权限逻辑。
-- `Scripts/Editor/fix_hover_outline.py` 仅修复并保存现有描边材质；完整表现生成脚本也同步使用 Before DOF，避免重建时复发。原材质备份位于 `Saved/HoverOutlineFix/M_HoverOutline.before.uasset`。
+- `Scripts/Editor/Characters/Presentation/fix_hover_outline.py` 仅修复并保存现有描边材质；完整表现生成脚本也同步使用 Before DOF，避免重建时复发。原材质备份位于 `Saved/HoverOutlineFix/M_HoverOutline.before.uasset`。
 - 本次验证：UE 5.9 开启渲染的命令行材质编译/保存通过（0 错误、0 警告）；独立进程重新加载材质及 TestMap，确认 Before DOF 已持久化且无边界后处理体积仍引用该材质。日志在 `Saved/HoverOutlineFix/Fix.log`、`Verify.log`。地图加载存在原有 GameplayCue 搜索路径与导航提示；未进行 PIE 鼠标悬停的连续画面验收。
 - `T_PlayerMarkers` 使用 GPT Image 第一版完整图片，包含原图的 1P/2P 文字与倒三角。HUD 通过图集 UV 分别显示蓝、金标记，不再叠加运行时字体。原图与空白备选版本保留在 Assets/UI/PlayerMarkers/Source。
 - Cinzel 字体来自 Google Fonts： https://github.com/google/fonts/tree/main/ofl/cinzel 。源字体与 SIL Open Font License 位于 Assets/UI/Fonts/Source，字体资产保留供其他 UI 使用，当前头顶标记不再引用它。
@@ -33,14 +33,14 @@
 - 红色优先于黄色，鼠标离开后保留。点击另一只怪物切换选中，点击地面、空白或其他角色取消怪物选中。取消后若仍悬浮该怪物，恢复黄色。
 - `SelectedEnemy` 是本地弱引用，与用于发出指令的 `SelectedCharacter` 分开；不复制、不改变 Actor Owner 或服务器攻击校验。死亡、销毁、己方角色死亡、重新分配角色和控制器退出时清理状态。
 - 角色本体和所属网格组件共用颜色。后处理材质继续在 Before DOF 合成，保留遮挡检查；红黄同时出现时，重叠外沿优先显示红色。
-- `Scripts/Editor/setup_outline_material.py` 是独立材质生成入口，完整表现生成脚本复用它。修改前材质备份：`Saved/MonsterOutline/M_HoverOutline.before.uasset`。
+- `Scripts/Editor/Characters/Presentation/setup_outline_material.py` 是独立材质生成入口，完整表现生成脚本复用它。修改前材质备份：`Saved/MonsterOutline/M_HoverOutline.before.uasset`。
 - 验证：Development Editor 编译通过；材质编译保存通过（缓存服务有连接警告，无材质编译错误）；`BoldersDemo.Presentation.MonsterOutline` 自动化测试通过，覆盖黄色悬浮、红色优先、移开保持、切换/取消、死亡/销毁及重新分配角色清理。日志为 `Saved/MonsterOutline/Material.log`、`Tests.log`。尚未进行实际鼠标操作的连续画面或双客户端视觉验收。
 
 运行 TestMap，鼠标移到自己的战士显示黄色轮廓；左键选择自己的战士，再左键点地面移动。蓝色 1P 与金色 2P 对应不同玩家。另一玩家的战士不会被本地描边或选中。
 
-编辑 BP_BoldersHUD 的 Markers 类别调整 MarkerSize、MarkerAtlas；编辑 BP_BoldersPlayerController 的 Presentation 类别调整成功／失败点击特效。`Scripts/Editor/setup_movement_presentation.py` 记录资产配置步骤。修改 GameMode 默认类配置后重新加载地图或编辑器，确保 PIE 使用新类。
+编辑 BP_BoldersHUD 的 Markers 类别调整 MarkerSize、MarkerAtlas；编辑 BP_BoldersPlayerController 的 Presentation 类别调整成功／失败点击特效。`Scripts/Editor/Characters/Presentation/setup_movement_presentation.py` 记录资产配置步骤。修改 GameMode 默认类配置后重新加载地图或编辑器，确保 PIE 使用新类。
 
-完整实现见 Source/BoldersDemo 下 Player/BoldersPlayerController、Characters/BaseCharacter、Game/BoldersGameMode 和 UI/BoldersHUD 的 Public/Private 文件。此前 Docs/WarriorMovement.md 内代码是基础移动版本；本次新增表现以当前源文件为准。
+当前实现可从 [玩家选择逻辑](../Source/BoldersDemo/Private/Player/BoldersPlayerControllerSelection.cpp)、[角色描边](../Source/BoldersDemo/Private/Characters/BaseCharacterPresentation.cpp)和 [HUD](../Source/BoldersDemo/Private/UI/Combat/BoldersHUD.cpp) 开始阅读。[WarriorMovement](WarriorMovement.md) 保留了早期的基础移动版本。
 
 ## 验证（2026-11-16）
 

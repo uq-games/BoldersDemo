@@ -8,6 +8,6 @@
 - 通知结束或武器换网格时停止采样，旧点按年龄淡出。材质 `M_WarriorBladeTrail` 用顶点 Alpha 控制衰减，局部齿线与刀尖亮边由 UV 控制；突刺只取刀尖附近的窄段。颜色由每次挥剑的动态材质实例设置。
 - 只有挥剑或残影消散时才更新网格。条带最多 48 组采样，复用同一个网格节，关闭碰撞和阴影。显示端基于各自播放的蒙太奇生成视觉效果，不同步条带顶点；原来的 `AttackHit` 仍负责服务器伤害。
 
-在五个 `AM_Warrior_*` 中选中 `Blade VFX` 轨的 `Weapon Trail`，拖动通知两端可改起止时间。`Fade Time` 改每段残影的寿命，`Tip Width` 改亮边宽度，`Tint` 改颜色；更换剑模型后，按模型的本地坐标重新对齐 `Blade Root` 和 `Blade Tip`。`Scripts/Editor/setup_warrior_blade_trail.py` 可重建本次配置，会覆盖手调后的刀光通知和材质节点。
+在五个 `AM_Warrior_*` 中选中 `Blade VFX` 轨的 `Weapon Trail`，拖动通知两端可改起止时间。`Fade Time` 改每段残影的寿命，`Tip Width` 改亮边宽度，`Tint` 改颜色；更换剑模型后，按模型的本地坐标重新对齐 `Blade Root` 和 `Blade Tip`。`Scripts/Editor/Combat/Elemental/setup_warrior_blade_trail.py` 可重建本次配置，会覆盖手调后的刀光通知和材质节点。
 
 UE 5.9 Editor 构建通过。TestMap 渲染运行通过五招伤害、刀光生成和消散检查；劈砍途中切换双手剑时，没有造成伤害，尾迹也已清除。双人 PIE 由客户端发起双手剑横扫，主机与客户端各生成和清除一条尾迹，双方目标均减少 33 点生命。

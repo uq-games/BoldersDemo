@@ -369,7 +369,7 @@ void ABoldersAIController::OnMoveCompleted(FAIRequestID RequestID, const FPathFo
 
 ### WarriorCharacter.h
 
-文件：`Source/BoldersDemo/Public/Characters/WarriorCharacter.h`
+文件：`Source/BoldersDemo/Public/Characters/Roles/WarriorCharacter.h`
 
 ```cpp
 #pragma once
@@ -387,7 +387,7 @@ class BOLDERSDEMO_API AWarriorCharacter : public ABaseCharacter
 
 ### WarriorCharacter.cpp
 
-文件：`Source/BoldersDemo/Private/Characters/WarriorCharacter.cpp`
+文件：`Source/BoldersDemo/Private/Characters/Roles/WarriorCharacter.cpp`
 
 ```cpp
 #include "Characters/WarriorCharacter.h"
@@ -484,7 +484,7 @@ void ABoldersGameMode::Logout(AController* Exiting)
 
 ### WarriorAnimInstance.h
 
-文件：`Source/BoldersDemo/Public/Characters/WarriorAnimInstance.h`
+文件：`Source/BoldersDemo/Public/Characters/Animation/WarriorAnimInstance.h`
 
 ```cpp
 #pragma once
@@ -506,7 +506,7 @@ public:
 
 ### WarriorAnimInstance.cpp
 
-文件：`Source/BoldersDemo/Private/Characters/WarriorAnimInstance.cpp`
+文件：`Source/BoldersDemo/Private/Characters/Animation/WarriorAnimInstance.cpp`
 
 ```cpp
 #include "Characters/WarriorAnimInstance.h"

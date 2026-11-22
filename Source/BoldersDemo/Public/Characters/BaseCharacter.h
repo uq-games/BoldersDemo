@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "AbilitySystemInterface.h"
-#include "Combat/AttackLoadout.h"
+#include "Combat/Data/AttackLoadout.h"
 #include "GameFramework/Character.h"
 #include "BaseCharacter.generated.h"
 
@@ -101,4 +101,8 @@ protected:
 	float LightningResistance = 0.f;
 	UPROPERTY(Transient) TWeakObjectPtr<AActor> LocalWindupVisual;
 	UPROPERTY(Transient) TObjectPtr<UStaticMeshComponent> LocalFrozenVisual;
+
+private:
+	void StopCombatMovement();
+	void UpdateFrozenVisual(bool bFrozen);
 };

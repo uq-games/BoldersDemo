@@ -73,6 +73,7 @@ BoldersDemo/
 ## 4. C++ 源码
 
 - 延续现有 `Source/BoldersDemo` 单模块，按职责逐步增加目录，例如 `Public/Characters/` 对应 `Private/Characters/`，或 `Public/Combat/` 对应 `Private/Combat/`。只有模块内部使用的头文件可放 `Private`；需要被其他模块包含的头文件放 `Public`。`.cpp` 放 `Private`。
+- 当前源码子目录、调用关系及资产生成脚本入口见 [代码阅读与整理笔记](CodeGuide.md)。
 - Public/Private 表示模块边界，与 C++ 类内的 `public` / `private` 访问控制不同；蓝图能否使用由 UE 反射和相应声明决定，不由文件夹名称直接决定。
 - 添加模块依赖时按实际使用维护 `BoldersDemo.Build.cs`；只有公共接口需要暴露的依赖才放 Public，否则优先 Private。移动现有类时检查 include 和构建；改动类名、模块名或代码后需考虑蓝图引用、反射和构建影响。
 - 项目规模确有需要时再讨论新模块或插件；目前不预设 GAS、网络功能或其他未确定的架构。

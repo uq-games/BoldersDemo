@@ -2,7 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "Combat/AttackLoadout.h"
+#include "Combat/Data/AttackLoadout.h"
 #include "GameplayAbilitySpec.h"
 #include "CharacterCombatComponent.generated.h"
 

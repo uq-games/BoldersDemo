@@ -55,7 +55,7 @@ flowchart TD
 
 界面使用 GPT Image 成品贴图。按钮和徽牌的底板与文字在同一张图上，选人标题、等待和失败提示也使用带字贴图。每张卡片的中文职业名与下方英文名绘制在同一张贴图上。卡片底图保留金框和青色选中光晕。UMG 使用 UV 取用图集中的部件，处理输入和状态切换，卡片里的角色继续实时渲染。源图与提示词见 `ArtSources/UI/ClassSelection/Style/LetteredArtwork.md`。
 
-石台引用 Inferno_World_Free 的 SM_Stone_001，人物动作取自项目已有角色和 KayKit。只更新选人外观时，在 Unreal 启用 Python Editor Script 后运行 `Scripts/Editor/update_class_selection_style.py`。该脚本导入新美术、更新职业目录和预览镜头，再调用 `Bolders.LayoutClassSelection` 刷新现有两个 UMG 蓝图。完整初始化继续使用 `Scripts/Editor/setup_class_selection.py`。
+石台引用 Inferno_World_Free 的 SM_Stone_001，人物动作取自项目已有角色和 KayKit。只更新选人外观时，在 Unreal 启用 Python Editor Script 后运行 `Scripts/Editor/UI/ClassSelection/update_class_selection_style.py`。该脚本导入新美术、更新职业目录和预览镜头，再调用 `Bolders.LayoutClassSelection` 刷新现有两个 UMG 蓝图。完整初始化继续使用 `Scripts/Editor/UI/ClassSelection/setup_class_selection.py`。
 
 ## 初版验证记录
 

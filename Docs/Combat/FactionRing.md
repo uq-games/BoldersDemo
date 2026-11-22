@@ -52,7 +52,7 @@ flowchart TD
 
 这是投射贴花，不是按地形生成的网格。小台阶和起伏在投射盒深度范围内可以接收圆环；大落差边缘可能出现断环，垂直侧面、透明表面、关闭 Receives Decals 或没有对应地面碰撞的物体不保证显示。浅投射范围用于减少穿到下层或附近墙面的情况，不能保证所有复杂重叠几何都不串色。
 
-资产生成入口：`Scripts/Editor/setup_faction_ring.py`。只给现有 BaseCharacter 子蓝图配置组件材质，普通 Actor 预览蓝图不强制改父类。修改前战士、小怪蓝图备份在 `Saved/FactionRing/`。
+资产生成入口：`Scripts/Editor/Characters/Presentation/setup_faction_ring.py`。只给现有 BaseCharacter 子蓝图配置组件材质，普通 Actor 预览蓝图不强制改父类。修改前战士、小怪蓝图备份在 `Saved/FactionRing/`。
 
 ## 验证（2026-11-17）
 
