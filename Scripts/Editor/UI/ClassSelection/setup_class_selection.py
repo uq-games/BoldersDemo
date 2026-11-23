@@ -67,19 +67,19 @@ save(preview)
 shared='/Game/KayKit_Adventurers/Shared/Animations/Medium/'
 configs=[
  ('Warrior','战士','近战 · 剑盾','靠近敌人，挥剑攻击',
-  'Idle/A_Warrior_GeneralIdle_A',
-  'Combat/Shield/A_Warrior_CombatMelee_Melee_Block',
-  shared+'Emotes/A_Medium_Simulation_Cheering',
+  'General/A_Warrior_GeneralIdle_A',
+  'CombatMelee/A_Warrior_CombatMelee_Melee_Block',
+  shared+'Simulation/A_Medium_Simulation_Cheering',
   'SM_sword_1handed','Weapon_R','SM_shield_badge_color','Shield_L'),
  ('Archer','弓箭手','远程 · 弓箭','拉弓射击，保持距离',
-  'Combat/Bow/A_Archer_CombatRanged_Ranged_Bow_Idle',
-  'Combat/Bow/A_Archer_CombatRanged_Ranged_Bow_Draw',
-  shared+'Emotes/A_Medium_Simulation_Waving',
+  'CombatRanged/A_Archer_CombatRanged_Ranged_Bow_Idle',
+  'CombatRanged/A_Archer_CombatRanged_Ranged_Bow_Draw',
+  shared+'Simulation/A_Medium_Simulation_Waving',
   'SM_bow','Bow_L',None,None),
  ('Mage','法师','远程 · 魔法','施放魔法弹，远程攻击',
-  'Idle/A_Mage_GeneralIdle_A',
-  'Combat/Magic/A_Mage_CombatRanged_Ranged_Magic_Spellcasting',
-  'Combat/Magic/A_Mage_CombatRanged_Ranged_Magic_Summon',
+  'General/A_Mage_GeneralIdle_A',
+  'CombatRanged/A_Mage_CombatRanged_Ranged_Magic_Spellcasting',
+  'CombatRanged/A_Mage_CombatRanged_Ranged_Magic_Summon',
   'SM_staff','Staff_R',None,None),
 ]
 definitions=[]
@@ -99,9 +99,9 @@ for role,title,subtitle,description,idle,hover,selected,weapon,socket,offhand,of
   d.set_editor_property(key+'_animation',anim)
   save(anim)
   print('PREVIEW_ANIMATION',role,key,source,anim.get_play_length())
- d.set_editor_property('weapon_mesh',unreal.load_asset(base+'/Weapons/'+weapon));d.set_editor_property('weapon_socket',socket)
+ d.set_editor_property('weapon_mesh',unreal.load_asset(base+'/Accessories/'+weapon));d.set_editor_property('weapon_socket',socket)
  if offhand:
-  d.set_editor_property('offhand_mesh',unreal.load_asset(base+'/Weapons/'+offhand));d.set_editor_property('offhand_socket',offsocket)
+  d.set_editor_property('offhand_mesh',unreal.load_asset(base+'/Accessories/'+offhand));d.set_editor_property('offhand_socket',offsocket)
  d.set_editor_property('pedestal_mesh',unreal.load_asset('/Game/Inferno_World_Free/Meshes/Rocks/SM_Stone_001'))
  d.set_editor_property('pedestal_scale',unreal.Vector(.33,.27,.35))
  d.set_editor_property('animate_bow_string',role=='Archer')

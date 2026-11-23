@@ -24,7 +24,6 @@ BoldersDemo/
 │  │  │  └─ Shared/                 # 多个功能共用的非蓝图资产
 │  │  └─ Blueprints/                # 项目自有蓝图，按功能细分
 │  │     ├─ Characters/             # 角色及动画蓝图
-│  │     ├─ Abilities/              # Gameplay Ability 蓝图
 │  │     ├─ Combat/                 # 战斗逻辑蓝图
 │  │     ├─ UI/                     # 控件蓝图
 │  │     └─ Shared/                 # 多个功能共用的蓝图
@@ -49,8 +48,7 @@ BoldersDemo/
 | 新内容 | 建议位置 | 说明 |
 | --- | --- | --- |
 | 角色蓝图 `BP_Hero`、动画蓝图 `ABP_Hero` | `Content/BoldersDemo/Blueprints/Characters/Hero/` | 按角色或功能细分 |
-| Gameplay Ability 蓝图 | `Content/BoldersDemo/Blueprints/Abilities/` | 例如 `GA_BasicAttack` |
-| 项目战斗蓝图 | `Content/BoldersDemo/Blueprints/Combat/` | 再按需要细分，例如 `Turns` |
+| 项目战斗蓝图 | `Content/BoldersDemo/Blueprints/Combat/` | 再按需要细分，例如 `Abilities`、`Turns` |
 | UI 控件蓝图 `WBP_...` | `Content/BoldersDemo/Blueprints/UI/` | UI 专属非蓝图素材放 `Assets/UI/` |
 | 自建角色模型、动画序列、材质实例与角色专属数据 | `Content/BoldersDemo/Assets/Characters/Hero/` | 可引用第三方资产包的内容 |
 | 项目战斗或技能数据资产 | `Content/BoldersDemo/Assets/Combat/` | 蓝图类放 `Blueprints/Combat/`；数据资产实例放这里 |
@@ -73,7 +71,6 @@ BoldersDemo/
 ## 4. C++ 源码
 
 - 延续现有 `Source/BoldersDemo` 单模块，按职责逐步增加目录，例如 `Public/Characters/` 对应 `Private/Characters/`，或 `Public/Combat/` 对应 `Private/Combat/`。只有模块内部使用的头文件可放 `Private`；需要被其他模块包含的头文件放 `Public`。`.cpp` 放 `Private`。
-- 当前源码子目录、调用关系及资产生成脚本入口见 [代码阅读与整理笔记](CodeGuide.md)。
 - Public/Private 表示模块边界，与 C++ 类内的 `public` / `private` 访问控制不同；蓝图能否使用由 UE 反射和相应声明决定，不由文件夹名称直接决定。
 - 添加模块依赖时按实际使用维护 `BoldersDemo.Build.cs`；只有公共接口需要暴露的依赖才放 Public，否则优先 Private。移动现有类时检查 include 和构建；改动类名、模块名或代码后需考虑蓝图引用、反射和构建影响。
 - 项目规模确有需要时再讨论新模块或插件；目前不预设 GAS、网络功能或其他未确定的架构。

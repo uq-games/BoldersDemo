@@ -9,8 +9,7 @@
 | 内容 | 放置位置 | 示例 |
 | --- | --- | --- |
 | 角色蓝图、动画蓝图 | `Content/BoldersDemo/Blueprints/Characters/<角色>/` | `BP_Hero`、`ABP_Hero` |
-| Gameplay Ability 蓝图 | `Content/BoldersDemo/Blueprints/Abilities/` | `GA_BasicAttack` |
-| 战斗、回合等其他逻辑蓝图 | `Content/BoldersDemo/Blueprints/Combat/` | 按需要再细分功能 |
+| 战斗、回合、技能等逻辑蓝图 | `Content/BoldersDemo/Blueprints/Combat/` | 按需要再细分功能 |
 | UI 控件蓝图 | `Content/BoldersDemo/Blueprints/UI/` | `WBP_CombatHUD` |
 | 多个功能共用的蓝图 | `Content/BoldersDemo/Blueprints/Shared/` | 公共蓝图 |
 | 项目地图和共用测试地图 | `Content/BoldersDemo/Assets/Maps/` | `TestMap` |

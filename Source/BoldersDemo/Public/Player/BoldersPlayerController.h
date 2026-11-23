@@ -24,21 +24,17 @@ public:
 	ABaseCharacter* GetAssignedCharacter() const { return AssignedCharacter; }
 	int32 GetPlayerSlot() const { return PlayerSlot; }
 	void SetPlayerSlot(int32 Slot);
-	UFUNCTION(BlueprintCallable, Category="Selection")
-	void ClearSelection();
-	UFUNCTION(BlueprintCallable, Category="Combat")
-	void SelectAttackSlot(int32 SlotIndex);
 protected:
 	UPROPERTY(EditDefaultsOnly, Category="Class Selection") TObjectPtr<UClassSelectionCatalog> SelectionCatalog;
 	UPROPERTY(EditDefaultsOnly, Category="Class Selection") TSubclassOf<UClassSelectionWidget> SelectionWidgetClass;
 	UPROPERTY(Transient, BlueprintReadOnly, Category="Class Selection") TObjectPtr<UClassSelectionWidget> ClassSelectionScreen;
 	UFUNCTION(Server, Reliable) void ServerChooseClass(FName ClassId);
 	UFUNCTION(Client, Reliable) void ClientClassSelectionFailed(const FText& Reason);
+	virtual void ReceivedPlayer() override;
 	virtual void PlayerTick(float DeltaSeconds) override;
 	void UpdateHoveredCharacter(ABaseCharacter* TargetCharacter);
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type Reason) override;
-	virtual void ReceivedPlayer() override;
 	virtual void SetupInputComponent() override;
 	void HandleCommandClick();
 	UFUNCTION(Client, Reliable)
@@ -51,8 +47,6 @@ protected:
 	void ServerRequestMove(ABaseCharacter* TargetCharacter, FVector_NetQuantize Destination);
 	UFUNCTION()
 	void OnRep_AssignedCharacter();
-	UFUNCTION(Server, Reliable) void ServerRequestAttack(ABaseCharacter* Attacker, ABaseCharacter* Target);
-	UFUNCTION(Server, Reliable) void ServerEquipAttack(FName ModuleId);
 
 	UPROPERTY(EditDefaultsOnly, Category="Input")
 	TObjectPtr<UInputMappingContext> CameraMappingContext;
@@ -71,15 +65,6 @@ private:
 	int32 PlayerSlot = 0;
 	void OpenClassSelection();
 	void CloseClassSelection();
-	friend class FMonsterOutlineStateTest;
-	friend class FFactionRingTest;
-	void UpdateSelectedCharacter(ABaseCharacter* TargetCharacter);
-	bool CanSelectEnemy(const ABaseCharacter* TargetCharacter) const;
-	void UpdateSelectedEnemy(ABaseCharacter* TargetCharacter);
-	void RefreshOutline(ABaseCharacter* TargetCharacter);
-	// Local visual selection, independent of the commanded player character.
-	UPROPERTY(Transient)
-	TWeakObjectPtr<ABaseCharacter> SelectedEnemy;
 	UPROPERTY(Transient)
 	TWeakObjectPtr<ABaseCharacter> HoveredCharacter;
 	TWeakObjectPtr<ULocalPlayer> MappingLocalPlayer;

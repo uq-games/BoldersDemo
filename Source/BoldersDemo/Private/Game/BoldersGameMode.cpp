@@ -1,6 +1,6 @@
 #include "Game/BoldersGameMode.h"
 #include "AIController.h"
-#include "Characters/Roles/WarriorCharacter.h"
+#include "Characters/WarriorCharacter.h"
 #include "EngineUtils.h"
 #include "Engine/TargetPoint.h"
 #include "Player/BoldersPlayerController.h"

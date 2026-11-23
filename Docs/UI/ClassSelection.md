@@ -18,7 +18,7 @@ TestMap 使用现有 GameMode，开局先创建 CameraPawn，玩家确认职业�
 - `/Game/BoldersDemo/Blueprints/Characters/<职业>/Preview/ABP_Preview_<职业>`：三个展示动作的混合。
 - `/Game/BoldersDemo/Assets/Characters/<职业>/Animations/Preview`：展示动作副本。
 
-展示角色继承 Actor，不继承 BaseCharacter，没有 ASC、AIController、寻路或攻击逻辑。正式角色仍使用原来的职业蓝图。弓弦仅作展示，不生成箭矢。
+展示角色由卡片创建，继承 Actor，负责镜头、姿势和武器外观。进入场景后，战士使用移动版的 `BP_Warrior`，弓箭手与法师使用继承 `BaseCharacter` 的数据蓝图。三者共用基础移动动画与 AI 寻路，`KayKitEquipmentComponent` 根据模型挂接剑盾、弓或法杖。
 
 ## 动作
 
@@ -47,7 +47,7 @@ flowchart TD
     I --> J[关闭界面并销毁本地展示 Actor]
 ```
 
-客户端只提交 ClassId，不提交任意角色类或路径。服务器拒绝不在 Catalog 中的职业，已分配角色后也不会重复生成。两位玩家可以选相同职业。当前玩家槽位按确认顺序分配，最多使用地图已有的出生点。
+客户端提交 ClassId，服务器从 Catalog 中查找角色类，并在该玩家尚未生成角色时接受选择。两位玩家可以选相同职业。玩家进入时即分配槽位，确认职业时使用该槽位对应的出生点。
 
 预览 Actor、RenderTarget、动态材质都由本地界面创建并持有 UPROPERTY 引用。退出界面销毁 Actor，关闭 Capture；没有预览网络复制。选择阶段 UIOnly 输入，HUD 隐藏；确认成功恢复 GameAndUI。
 
