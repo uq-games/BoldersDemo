@@ -43,20 +43,32 @@ bool ABaseCharacter::ReceiveDamageAt(ABaseCharacter* Source, float Damage, const
 
 bool ABaseCharacter::ReceiveElementDamage(ABaseCharacter* Source, float Damage, EDamageElement Element)
 {
-	if (!HasAuthority() || !IsAlive() || !IsHostileTo(Source) || !Source->IsAlive()
-		|| !FMath::IsFinite(Damage) || Damage <= 0.f) return false;
-	auto* SourceASC = Source->GetAbilitySystemComponent();
-	auto Context = SourceASC->MakeEffectContext();
-	Context.AddSourceObject(Source);
-	auto Spec = SourceASC->MakeOutgoingSpec(UBoldersDamageEffect::StaticClass(), 1.f, Context);
+	if (!IsHostileTo(Source) || !Source->IsAlive()) return false;
+	return CommitElementDamage(*Source, *Source->GetAbilitySystemComponent(), Damage, Element);
+}
+
+bool ABaseCharacter::ReceiveEnvironmentDamage(AActor& Source, UAbilitySystemComponent& SourceASC,
+	float Damage, EDamageElement Element)
+{
+	if (GetFaction() == ECharacterFaction::Neutral || SourceASC.GetAvatarActor() != &Source) return false;
+	return CommitElementDamage(Source, SourceASC, Damage, Element);
+}
+
+bool ABaseCharacter::CommitElementDamage(AActor& Source, UAbilitySystemComponent& SourceASC,
+	float Damage, EDamageElement Element)
+{
+	if (!HasAuthority() || !IsAlive() || !FMath::IsFinite(Damage) || Damage <= 0.f) return false;
+	auto Context = SourceASC.MakeEffectContext();
+	Context.AddSourceObject(&Source);
+	auto Spec = SourceASC.MakeOutgoingSpec(UBoldersDamageEffect::StaticClass(), 1.f, Context);
 	if (!Spec.IsValid()) return false;
 	Spec.Data->SetSetByCallerMagnitude(TAG_Data_HealthDelta, -Damage);
 	const FGameplayTag ElementTag = GetDamageElementTag(Element);
 	Spec.Data->AddDynamicAssetTag(ElementTag);
 	const float Before = GetHealth();
-	SourceASC->ApplyGameplayEffectSpecToTarget(*Spec.Data.Get(), AbilitySystemComponent);
+	SourceASC.ApplyGameplayEffectSpecToTarget(*Spec.Data.Get(), AbilitySystemComponent);
 	UE_LOG(LogTemp, Log, TEXT("CombatDamage: %s -> %s health %.1f -> %.1f (%s)"),
-		*Source->GetName(), *GetName(), Before, GetHealth(), *ElementTag.ToString());
+		*Source.GetName(), *GetName(), Before, GetHealth(), *ElementTag.ToString());
 	return GetHealth() < Before;
 }
 
@@ -67,13 +79,23 @@ void ABaseCharacter::ApplyFreezeFrom(ABaseCharacter* Source)
 
 void ABaseCharacter::ApplyElementalAura(ABaseCharacter* Source, EElementalAura Aura)
 {
-	if (!HasAuthority() || !IsAlive() || !IsHostileTo(Source)) return;
+	if (IsHostileTo(Source)) CommitElementalAura(*Source->GetAbilitySystemComponent(), Aura);
+}
+
+void ABaseCharacter::ApplyEnvironmentAura(AActor& Source, UAbilitySystemComponent& SourceASC, EElementalAura Aura)
+{
+	if (GetFaction() == ECharacterFaction::Neutral || SourceASC.GetAvatarActor() != &Source) return;
+	CommitElementalAura(SourceASC, Aura);
+}
+
+void ABaseCharacter::CommitElementalAura(UAbilitySystemComponent& SourceASC, EElementalAura Aura)
+{
+	if (!HasAuthority() || !IsAlive()) return;
 	const auto Effect = GetElementalAuraEffect(Aura);
 	if (!Effect) return;
 	const EElementalAura Previous = GetElementalAura();
-	auto* SourceASC = Source->GetAbilitySystemComponent();
-	const auto Spec = SourceASC->MakeOutgoingSpec(Effect, 1.f, SourceASC->MakeEffectContext());
-	if (Spec.IsValid() && SourceASC->ApplyGameplayEffectSpecToTarget(*Spec.Data.Get(), AbilitySystemComponent).IsValid()
+	const auto Spec = SourceASC.MakeOutgoingSpec(Effect, 1.f, SourceASC.MakeEffectContext());
+	if (Spec.IsValid() && SourceASC.ApplyGameplayEffectSpecToTarget(*Spec.Data.Get(), AbilitySystemComponent).IsValid()
 		&& Previous != Aura)
 	{
 		ClearElementalAura(Previous);
@@ -90,8 +112,10 @@ void ABaseCharacter::ClearElementalAura(EElementalAura Aura)
 void ABaseCharacter::ApplyCombatImpulse(const FVector& VelocityChange)
 {
 	if (!HasAuthority() || !IsAlive() || VelocityChange.ContainsNaN() || VelocityChange.IsNearlyZero()) return;
+	const FVector AppliedImpulse = VelocityChange * GetCombatImpulseScale();
+	if (AppliedImpulse.IsNearlyZero()) return;
 	StopCombatMovement();
-	GetCharacterMovement()->AddImpulse(VelocityChange, true);
+	GetCharacterMovement()->AddImpulse(AppliedImpulse, true);
 	ForceNetUpdate();
 }
 
@@ -110,8 +134,23 @@ void ABaseCharacter::HandleHealthChanged(const FOnAttributeChangeData& Data)
 		return;
 	}
 	if (Data.OldValue <= 0.f || Data.NewValue > 0.f) return;
+	Combat->ClearBladeCoating();
 	StopCombatMovement();
 	GetCharacterMovement()->DisableMovement();
+}
+
+void ABaseCharacter::ReviveAtCheckpoint(const FVector& Center)
+{
+	if (!HasAuthority() || PlayerSlot <= 0 || IsAlive()) return;
+	StopCombatMovement();
+	Combat->ClearBladeCoating();
+	for (const EElementalAura Aura : {EElementalAura::Heat, EElementalAura::Chill, EElementalAura::Wet,
+		EElementalAura::Charge, EElementalAura::Frozen})
+		ClearElementalAura(Aura);
+	SetActorLocation(Center, false, nullptr, ETeleportType::TeleportPhysics);
+	AbilitySystemComponent->SetNumericAttributeBase(UBoldersAttributeSet::GetHealthAttribute(), GetMaxHealth() * .50f);
+	GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+	ForceNetUpdate();
 }
 
 void ABaseCharacter::StopCombatMovement()

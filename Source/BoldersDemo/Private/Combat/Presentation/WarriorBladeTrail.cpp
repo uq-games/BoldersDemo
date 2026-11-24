@@ -1,6 +1,7 @@
 #include "Combat/Presentation/WarriorBladeTrail.h"
 
 #include "Combat/Presentation/AnimNotifyState_WeaponTrail.h"
+#include "Combat/Presentation/CombatGuideStyle.h"
 #include "Combat/Equipment/Weapon.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/StaticMeshComponent.h"
@@ -39,7 +40,11 @@ void AWarriorBladeTrail::Initialize(AWeapon& Weapon, USkeletalMeshComponent& Pos
 	FadeTime = FMath::Clamp(Style.FadeTime, .03f, .35f);
 	TipWidth = Style.TipWidth;
 	if (auto* Material = Ribbon->CreateDynamicMaterialInstance(0, Style.TrailMaterial))
-		Material->SetVectorParameterValue(TEXT("TrailTint"), Style.Tint);
+	{
+		const EDamageElement Coating = Weapon.GetDisplayedCoating();
+		Material->SetVectorParameterValue(TEXT("TrailTint"), Coating == EDamageElement::Physical
+			? Style.Tint : CombatGuideStyle::ElementColor(Coating));
+	}
 	Samples.Reserve(MaxSamples);
 	Vertices.Reserve(MaxSamples * VerticesPerSample);
 	UVs.Reserve(MaxSamples * VerticesPerSample);

@@ -1,18 +1,31 @@
 #include "Combat/Attacks/AttackResolution.h"
 
 #include "Characters/BaseCharacter.h"
+#include "Combat/Environment/CombatCollision.h"
+#include "Combat/Environment/VolcanoHazard.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/PrimitiveComponent.h"
 #include "Engine/OverlapResult.h"
 #include "Engine/World.h"
+#include "EngineUtils.h"
 
-namespace
+using BoldersCollision::SolidObjects;
+
+void AttackResolution::TriggerHazardsInArea(ABaseCharacter& Source, const FVector& Center, float Radius,
+	EDamageElement Element, const AActor* AlreadyHit)
 {
-	const FCollisionObjectQueryParams& SolidObjects()
+	if (!Source.HasAuthority() || !Source.IsAlive() || Center.ContainsNaN() || Radius <= 0.f) return;
+	UWorld* World = Source.GetWorld();
+	FCollisionQueryParams Sight(SCENE_QUERY_STAT(HazardAreaExposure), false, &Source);
+	const FCollisionObjectQueryParams Cover(ECC_WorldStatic);
+	for (TActorIterator<AVolcanoHazard> It(World); It; ++It)
 	{
-		static const FCollisionObjectQueryParams Objects(
-			ECC_TO_BITFIELD(ECC_WorldStatic) | ECC_TO_BITFIELD(ECC_WorldDynamic) | ECC_TO_BITFIELD(ECC_PhysicsBody));
-		return Objects;
+		AVolcanoHazard* Hazard = *It;
+		if (Hazard == AlreadyHit || !Hazard->CanReceiveAttack() || !Hazard->IntersectsAreaImpact(Center, Radius)) continue;
+		const FVector Contact = Hazard->GetActorLocation() + FVector(0, 0, 38);
+		if (World->LineTraceTestByObjectType(Center, Contact, Cover, Sight)) continue;
+		if (Hazard->ReceiveAttack(&Source, Element))
+			UE_LOG(LogTemp, Log, TEXT("Foundry impact: %s affected %s"), *Source.GetName(), *Hazard->GetName());
 	}
 }
 
@@ -91,7 +104,13 @@ FVector AttackResolution::GroundPoint(const ABaseCharacter& Character)
 	const FVector Feet = Center - FVector(0, 0, Character.GetCapsuleComponent()->GetScaledCapsuleHalfHeight());
 	FCollisionQueryParams Params(SCENE_QUERY_STAT(ModuleGround), false, &Character);
 	FHitResult Hit;
-	if (Character.GetWorld()->LineTraceSingleByChannel(Hit, Feet + FVector(0, 0, 12), Feet - FVector(0, 0, 70),
-		ECC_Visibility, Params)) return Hit.ImpactPoint + FVector(0, 0, 3);
+	const FVector Start = Feet + FVector(0, 0, 12);
+	const FVector End = Feet - FVector(0, 0, 70);
+	if (Character.GetWorld()->LineTraceSingleByChannel(Hit, Start, End, ECC_Visibility, Params))
+	{
+		if (!Cast<AVolcanoHazard>(Hit.GetActor())) return Hit.ImpactPoint + FVector(0, 0, 3);
+		if (Character.GetWorld()->LineTraceSingleByObjectType(Hit, Start, End, FCollisionObjectQueryParams(ECC_WorldStatic), Params))
+			return Hit.ImpactPoint + FVector(0, 0, 3);
+	}
 	return Feet + FVector(0, 0, 3);
 }

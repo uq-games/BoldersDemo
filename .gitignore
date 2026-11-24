@@ -17,3 +17,4 @@ Saved
 *.xcworkspace
 __pycache__/
 *.py[cod]
+/Build/Windows/FileOpenOrder/*.log

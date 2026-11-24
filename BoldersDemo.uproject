@@ -15,6 +15,10 @@
 	],
 	"Plugins": [
 		{
+			"Name": "Fab",
+			"Enabled": false
+		},
+		{
 			"Name": "ProceduralMeshComponent",
 			"Enabled": true
 		},

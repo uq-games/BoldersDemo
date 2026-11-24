@@ -32,6 +32,13 @@ protected:
 	UFUNCTION() void OnImpact(UPrimitiveComponent* HitComponent, AActor* OtherActor,
 		UPrimitiveComponent* OtherComponent, FVector NormalImpulse, const FHitResult& Hit);
 private:
+#if WITH_DEV_AUTOMATION_TESTS && WITH_EDITOR
+	friend class FVolcanoProjectileResponseTest;
+#endif
+	UFUNCTION() void OnPawnOverlap(UPrimitiveComponent* HitComponent, AActor* OtherActor,
+		UPrimitiveComponent* OtherComponent, int32 BodyIndex, bool bFromSweep, const FHitResult& Hit);
+	void ResolveImpact(AActor* OtherActor, UPrimitiveComponent* OtherBody,
+		const FVector& Point, const FVector& Normal, const FVector& SweepEnd);
 	UFUNCTION() void RefreshFlightVisual();
 	const FAttackModule* GetModule() const;
 	void CheckWavePath(const FVector& End);

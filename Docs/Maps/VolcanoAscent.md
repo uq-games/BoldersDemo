@@ -16,8 +16,8 @@
 ## 参考和素材
 
 - 火山美术和原场地来自项目已导入的 Inferno World Free。环境资产引用原包。 [Fab 原包](https://www.fab.com/listings/de629205-4662-42b9-939a-3c783c63fdf2)
-- 森林植被、部分岩石与断柱来自 Kenney Nature Kit 2.1，庭院墙体、拱门与塔楼来自 Kenney Castle Kit 2.0，两包均为 CC0。原始压缩包和自制网格的 FBX 备份位于 `H:\UE5\AssetSources\BoldersDemo\VolcanoAscent`。 [Nature Kit](https://kenney.nl/assets/nature-kit?part=f6b819f6-76a7-4e02-9296-4e39e659baf4) · [Castle Kit](https://kenney.nl/assets/castle-kit?part=f5287c5c-846a-4adb-8cc8-5f518d42904c)
-- 路线比例参考 Epic 的场地白盒教程。斜坡、导航体积以及俯视镜头遮挡分别参考官方示例地图。 [关卡白盒](https://dev.epicgames.com/documentation/unreal-engine/designer-01-project-setup-and-level-blockout-in-unreal-engine) · [Content Examples](https://dev.epicgames.com/documentation/unreal-engine/content-examples-sample-project-for-unreal-engine) · [Top Down](https://dev.epicgames.com/documentation/unreal-engine/top-down-template-in-unreal-engine)
+- 森林植被、部分岩石与断柱来自 Kenney Nature Kit 2.1，庭院墙体、拱门与塔楼来自 Kenney Castle Kit 2.0，两包均为 CC0。原始压缩包和自制网格的 FBX 备份位于 `H:\UE5\AssetSources\BoldersDemo\VolcanoAscent`。 [Nature Kit](https://kenney.nl/assets/nature-kit?part=f6b819f6-76a7-4e02-9296-4e39e659baf4)，[Castle Kit](https://kenney.nl/assets/castle-kit?part=f5287c5c-846a-4adb-8cc8-5f518d42904c)
+- 路线比例参考 Epic 的场地白盒教程。斜坡、导航体积以及俯视镜头遮挡分别参考官方示例地图。 [关卡白盒](https://dev.epicgames.com/documentation/unreal-engine/designer-01-project-setup-and-level-blockout-in-unreal-engine)，[Content Examples](https://dev.epicgames.com/documentation/unreal-engine/content-examples-sample-project-for-unreal-engine)，[Top Down](https://dev.epicgames.com/documentation/unreal-engine/top-down-template-in-unreal-engine)
 
 ## 编辑与重建
 

@@ -12,7 +12,7 @@ OUTPUT = ROOT / "ArtSources/UI/ClassSelection/Style"
 
 def fonts(font_path):
     # Font families are renamed because these are small, static subsets for the game's UI.
-    glyphs = "".join(chr(i) for i in range(32, 127)) + "…·"
+    glyphs = "".join(chr(i) for i in range(32, 127)) + "…"
     for file in (
         "Scripts/Editor/UI/ClassSelection/setup_class_selection.py",
         "Source/BoldersDemo/Private/Editor/UI/ClassSelectionSetup.cpp",

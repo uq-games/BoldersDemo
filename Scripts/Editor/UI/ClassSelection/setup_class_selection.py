@@ -66,17 +66,17 @@ save(preview)
 
 shared='/Game/KayKit_Adventurers/Shared/Animations/Medium/'
 configs=[
- ('Warrior','战士','近战 · 剑盾','靠近敌人，挥剑攻击',
+ ('Warrior','战士','近战剑盾','靠近敌人，挥剑攻击',
   'Idle/A_Warrior_GeneralIdle_A',
   'Combat/Shield/A_Warrior_CombatMelee_Melee_Block',
   shared+'Emotes/A_Medium_Simulation_Cheering',
   'SM_sword_1handed','Weapon_R','SM_shield_badge_color','Shield_L'),
- ('Archer','弓箭手','远程 · 弓箭','拉弓射击，保持距离',
+ ('Archer','弓箭手','远程弓箭','拉弓射击，保持距离',
   'Combat/Bow/A_Archer_CombatRanged_Ranged_Bow_Idle',
   'Combat/Bow/A_Archer_CombatRanged_Ranged_Bow_Draw',
   shared+'Emotes/A_Medium_Simulation_Waving',
   'SM_bow','Bow_L',None,None),
- ('Mage','法师','远程 · 魔法','施放魔法弹，远程攻击',
+ ('Mage','法师','远程魔法','施放魔法弹，远程攻击',
   'Idle/A_Mage_GeneralIdle_A',
   'Combat/Magic/A_Mage_CombatRanged_Ranged_Magic_Spellcasting',
   'Combat/Magic/A_Mage_CombatRanged_Ranged_Magic_Summon',

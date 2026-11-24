@@ -9,6 +9,9 @@ class AAttackProjectile;
 class AWarriorBladeTrail;
 class UAnimNotifyState_WeaponTrail;
 class USkeletalMeshComponent;
+class UProceduralMeshComponent;
+enum class EDamageElement : uint8;
+struct FAttackModule;
 
 // A weapon supplies appearance and attack configuration; the character executes combat.
 UCLASS()
@@ -19,6 +22,8 @@ public:
 	AWeapon();
 	void StartBladeTrail(USkeletalMeshComponent& Pose, const UAnimNotifyState_WeaponTrail& Style);
 	void StopBladeTrail(const UAnimNotifyState_WeaponTrail& Style);
+	void SetBladeCoating(EDamageElement Element, const FAttackModule* Module);
+	EDamageElement GetDisplayedCoating() const { return DisplayedCoating; }
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="Weapon")
 	TObjectPtr<UStaticMeshComponent> Mesh;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Weapon")
@@ -41,5 +46,8 @@ public:
 	FVector ProjectileSpawnOffset = FVector(45.f, 0.f, 20.f);
 
 private:
+	UPROPERTY() TObjectPtr<UMaterialInterface> BladeCoatingMaterial;
+	UPROPERTY(Transient) TObjectPtr<UProceduralMeshComponent> BladeCoatingMesh;
+	EDamageElement DisplayedCoating{};
 	TWeakObjectPtr<AWarriorBladeTrail> BladeTrail;
 };

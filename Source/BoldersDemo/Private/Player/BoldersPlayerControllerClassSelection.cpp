@@ -1,8 +1,11 @@
 #include "Player/BoldersPlayerController.h"
 
+#include "Characters/BaseCharacter.h"
+#include "Engine/GameViewportClient.h"
 #include "Engine/World.h"
 #include "Game/BoldersGameMode.h"
 #include "UI/ClassSelection/ClassSelectionWidget.h"
+#include "Widgets/SViewport.h"
 
 void ABoldersPlayerController::OpenClassSelection()
 {
@@ -28,6 +31,9 @@ void ABoldersPlayerController::CloseClassSelection()
 		FInputModeGameAndUI Mode;
 		Mode.SetHideCursorDuringCapture(false);
 		Mode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+		if (UsesDirectCombatControls() && IsValid(AssignedCharacter))
+			if (auto* Viewport = GetWorld()->GetGameViewport())
+				Mode.SetWidgetToFocus(Viewport->GetGameViewportWidget());
 		SetInputMode(Mode);
 	}
 }

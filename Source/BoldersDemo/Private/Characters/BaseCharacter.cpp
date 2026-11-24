@@ -3,17 +3,22 @@
 #include "AbilitySystemComponent.h"
 #include "AI/BoldersAIController.h"
 #include "AI/Positioning/AttackPositioningComponent.h"
+#include "Camera/CameraTypes.h"
 #include "Characters/Animation/BaseCharacterAnimInstance.h"
+#include "Characters/BoldersCombatMovementComponent.h"
 #include "Characters/Presentation/FactionRingComponent.h"
 #include "Combat/CharacterCombatComponent.h"
 #include "Combat/Effects/BoldersAttributeSet.h"
 #include "Combat/Effects/BoldersDamageEffect.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Engine/World.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Net/UnrealNetwork.h"
+#include "Player/BoldersPlayerController.h"
 
-ABaseCharacter::ABaseCharacter()
+ABaseCharacter::ABaseCharacter(const FObjectInitializer& ObjectInitializer)
+	: Super(ObjectInitializer.SetDefaultSubobjectClass<UBoldersCombatMovementComponent>(CharacterMovementComponentName))
 {
 	PrimaryActorTick.bCanEverTick = false;
 	bReplicates = true;
@@ -33,6 +38,7 @@ ABaseCharacter::ABaseCharacter()
 	GetCharacterMovement()->AvoidanceConsiderationRadius = 150.f;
 	GetCapsuleComponent()->SetCollisionResponseToChannel(ECC_Visibility, ECR_Block);
 	GetCapsuleComponent()->SetCanEverAffectNavigation(false);
+	GetMesh()->SetReceivesDecals(false);
 	GetMesh()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	GetMesh()->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
 	GetMesh()->SetCanEverAffectNavigation(false);
@@ -50,6 +56,26 @@ void ABaseCharacter::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
 	ApplyAnimationBlueprint();
+}
+
+void ABaseCharacter::PostInitializeComponents()
+{
+	Super::PostInitializeComponents();
+	if (!GetWorld()->IsGameWorld() || FMath::IsNearlyEqual(CombatModelScale, 1.f)) return;
+
+	USkeletalMeshComponent& VisualMesh = *GetMesh();
+	const double FloorZ = -GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight();
+	FVector Offset = VisualMesh.GetRelativeLocation();
+	Offset.Z = FloorZ + (Offset.Z - FloorZ) * CombatModelScale;
+	VisualMesh.SetRelativeLocation(Offset);
+	VisualMesh.SetRelativeScale3D(VisualMesh.GetRelativeScale3D() * CombatModelScale);
+	CacheInitialMeshOffset(Offset, VisualMesh.GetRelativeRotation());
+}
+
+FVector ABaseCharacter::GetOverheadAnchor(float Clearance) const
+{
+	const float HalfHeight = GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
+	return GetActorLocation() + FVector(0, 0, HalfHeight * (2.f * CombatModelScale - 1.f) + Clearance);
 }
 
 void ABaseCharacter::ApplyAnimationBlueprint()
@@ -106,6 +132,41 @@ bool ABaseCharacter::IsHostileTo(const ABaseCharacter* Other) const
 {
 	return IsValid(Other) && Other != this && Faction != ECharacterFaction::Neutral
 		&& Other->Faction != ECharacterFaction::Neutral && Faction != Other->Faction;
+}
+
+bool ABaseCharacter::HasDirectCombatInput() const
+{
+	const auto* PC = Cast<ABoldersPlayerController>(GetController());
+	return PC && PC->UsesDirectCombatControls();
+}
+
+void ABaseCharacter::CalcCamera(float DeltaTime, FMinimalViewInfo& OutResult)
+{
+	if (!HasDirectCombatInput())
+	{
+		Super::CalcCamera(DeltaTime, OutResult);
+		return;
+	}
+
+	const FRotator View = ABoldersPlayerController::GetFixedCombatViewRotation();
+	const FVector GroundFocus = GetActorLocation() + FVector(0, 0, 38.f);
+	OutResult.Rotation = View;
+	OutResult.Location = GroundFocus - View.Vector() * 2110.f;
+	OutResult.FOV = 56.f;
+}
+
+void ABaseCharacter::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+	if (AbilitySystemComponent && AbilitySystemComponent->GetAvatarActor() == this)
+		AbilitySystemComponent->RefreshAbilityActorInfo();
+}
+
+void ABaseCharacter::OnRep_Controller()
+{
+	Super::OnRep_Controller();
+	if (AbilitySystemComponent && AbilitySystemComponent->GetAvatarActor() == this)
+		AbilitySystemComponent->RefreshAbilityActorInfo();
 }
 
 bool ABaseCharacter::RequestMoveToLocation(const FVector& Destination)

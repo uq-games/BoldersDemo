@@ -6,6 +6,7 @@
 #include "Characters/Roles/EnemyCharacter.h"
 #include "Player/BoldersPlayerController.h"
 #include "Combat/Effects/BoldersAttributeSet.h"
+#include "Combat/Presentation/CombatGuideStyle.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMeshActor.h"
@@ -26,7 +27,7 @@ bool FFactionRingTest::RunTest(const FString& Parameters)
 	auto* Neutral = World->SpawnActor<ABaseCharacter>(Spawn);
 	auto* PC = World->SpawnActor<ABoldersPlayerController>(Spawn);
 	auto* Floor = World->SpawnActor<AStaticMeshActor>(Spawn);
-	auto* Material = LoadObject<UMaterialInterface>(nullptr, TEXT("/Game/BoldersDemo/Assets/Shared/Materials/M_FactionRing"));
+	auto* Material = LoadObject<UMaterialInterface>(nullptr, CombatGuideStyle::FootprintMaterialPath);
 	if (!TestNotNull(TEXT("Configured decal material exists"), Material)) return false;
 	Floor->SetMobility(EComponentMobility::Movable);
 	Floor->GetStaticMeshComponent()->SetStaticMesh(LoadObject<UStaticMesh>(nullptr, TEXT("/Engine/BasicShapes/Cube.Cube")));
@@ -46,6 +47,16 @@ bool FFactionRingTest::RunTest(const FString& Parameters)
 	TestTrue(TEXT("Separate MIDs per character"), Hero->FactionRing->RingMaterialInstance != Enemy->FactionRing->RingMaterialInstance);
 	TestEqual(TEXT("Player blue"), Hero->FactionRing->RingMaterialInstance->K2_GetVectorParameterValue(TEXT("RingColor")), Hero->FactionRing->PlayerColor);
 	TestEqual(TEXT("Enemy red"), Enemy->FactionRing->RingMaterialInstance->K2_GetVectorParameterValue(TEXT("RingColor")), Enemy->FactionRing->EnemyColor);
+	TestEqual(TEXT("Enemy uses broken-edge mask"), Enemy->FactionRing->RingMaterialInstance->K2_GetScalarParameterValue(TEXT("MarkStyle")), 2.f);
+	Hero->PlayerSlot = 1;
+	Hero->FactionRing->UpdateRing();
+	TestEqual(TEXT("Host uses continuous edge"), Hero->FactionRing->RingMaterialInstance->K2_GetScalarParameterValue(TEXT("MarkStyle")), 0.f);
+	Hero->PlayerSlot = 2;
+	Hero->FactionRing->UpdateRing();
+	TestEqual(TEXT("Guest uses paired gaps"), Hero->FactionRing->RingMaterialInstance->K2_GetScalarParameterValue(TEXT("MarkStyle")), 1.f);
+	TestEqual(TEXT("Guest is amber"), Hero->FactionRing->RingMaterialInstance->K2_GetVectorParameterValue(TEXT("RingColor")),
+		FLinearColor(1.f, .76f, .23f));
+	Hero->PlayerSlot = 0;
 	// Count actual queries, rather than just testing a scheduling predicate.
 	Floor->SetMobility(EComponentMobility::Static);
 	Hero->FactionRing->UpdateRing(0.2f);

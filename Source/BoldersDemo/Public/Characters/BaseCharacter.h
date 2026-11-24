@@ -15,6 +15,7 @@ class UBaseCharacterAnimInstance;
 class UAnimMontage;
 struct FOnAttributeChangeData;
 struct FGameplayTag;
+struct FMinimalViewInfo;
 
 UENUM(BlueprintType)
 enum class ECharacterFaction : uint8 { Neutral, Player, Enemy };
@@ -24,8 +25,16 @@ class BOLDERSDEMO_API ABaseCharacter : public ACharacter, public IAbilitySystemI
 {
 	GENERATED_BODY()
 public:
-	ABaseCharacter();
+	ABaseCharacter(const FObjectInitializer& ObjectInitializer = FObjectInitializer::Get());
 	virtual void OnConstruction(const FTransform& Transform) override;
+	virtual void PostInitializeComponents() override;
+	virtual void CalcCamera(float DeltaTime, FMinimalViewInfo& OutResult) override;
+	virtual void PossessedBy(AController* NewController) override;
+	virtual void OnRep_Controller() override;
+	bool HasDirectCombatInput() const;
+	void ReviveAtCheckpoint(const FVector& Center);
+	FVector GetOverheadAnchor(float Clearance) const;
+	float GetCombatModelScale() const { return CombatModelScale; }
 	// Select the generated class (ABP_*_C), not the editor-only UAnimBlueprint asset.
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="Character|Animation")
 	TSubclassOf<UBaseCharacterAnimInstance> AnimationBlueprintClass;
@@ -43,8 +52,10 @@ public:
 	bool ReceiveDamageFrom(ABaseCharacter* Source, float Damage);
 	bool ReceiveDamageAt(ABaseCharacter* Source, float Damage, const FVector& Contact);
 	bool ReceiveElementDamage(ABaseCharacter* Source, float Damage, EDamageElement Element);
+	bool ReceiveEnvironmentDamage(AActor& Source, UAbilitySystemComponent& SourceASC, float Damage, EDamageElement Element);
 	void ApplyFreezeFrom(ABaseCharacter* Source);
 	void ApplyElementalAura(ABaseCharacter* Source, EElementalAura Aura);
+	void ApplyEnvironmentAura(AActor& Source, UAbilitySystemComponent& SourceASC, EElementalAura Aura);
 	void ClearElementalAura(EElementalAura Aura);
 	void ApplyCombatImpulse(const FVector& VelocityChange);
 	virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
@@ -60,6 +71,8 @@ public:
 	UFUNCTION(NetMulticast, Unreliable) void MulticastElementalReaction(EElementalReaction Reaction,
 		FVector_NetQuantize Location, FVector_NetQuantize End);
 	UFUNCTION(NetMulticast, Unreliable) void MulticastModuleWindup(FName ModuleId, float Duration, FVector_NetQuantize Aim);
+	UFUNCTION(Client, Reliable) void ClientPlayBasicAttackMontage(UAnimMontage* Montage, float StartPosition, FRotator Facing);
+	UFUNCTION(Client, Reliable) void ClientStopBasicAttackMontage();
 	void SetHoverOutline(bool bEnabled, bool bSelected = false);
 	// Accepted does not mean arrived. Only the server may execute this request.
 	UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="Character|Movement")
@@ -73,6 +86,9 @@ public:
 	TObjectPtr<UFactionRingComponent> FactionRing;
 
 protected:
+	UPROPERTY(EditDefaultsOnly, Category="Character|Presentation", meta=(ClampMin="1", ClampMax="1.5"))
+	float CombatModelScale = 1.f;
+	virtual float GetCombatImpulseScale() const { return 1.f; }
 	virtual void BeginPlay() override;
 	virtual void EndPlay(const EEndPlayReason::Type Reason) override;
 	void HandleHealthChanged(const FOnAttributeChangeData& Data);
@@ -103,6 +119,9 @@ protected:
 	UPROPERTY(Transient) TObjectPtr<UStaticMeshComponent> LocalFrozenVisual;
 
 private:
+	bool CommitElementDamage(AActor& Source, UAbilitySystemComponent& SourceASC, float Damage, EDamageElement Element);
+	void CommitElementalAura(UAbilitySystemComponent& SourceASC, EElementalAura Aura);
 	void StopCombatMovement();
 	void UpdateFrozenVisual(bool bFrozen);
+	int32 LocalAttackMontageInstanceId = INDEX_NONE;
 };

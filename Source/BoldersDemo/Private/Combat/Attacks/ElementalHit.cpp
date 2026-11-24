@@ -1,5 +1,6 @@
 #include "Combat/Attacks/AttackResolution.h"
 
+#include "AbilitySystemComponent.h"
 #include "Characters/BaseCharacter.h"
 
 namespace
@@ -72,12 +73,13 @@ namespace
 }
 
 bool AttackResolution::ApplyHit(ABaseCharacter& Source, ABaseCharacter& Target, const FAttackModule& Module, float Damage,
-	FElementalHitBatch* Batch, const AActor* Ignore)
+	FElementalHitBatch* Batch, const AActor* Ignore, TOptional<EDamageElement> ElementOverride)
 {
+	const EDamageElement Element = ElementOverride.Get(Module.Element);
 	const EElementalAura Existing = Target.GetElementalAura();
-	const EElementalAura Incoming = AuraFor(Module.Element);
+	const EElementalAura Incoming = AuraFor(Element);
 	const auto* Rule = FindReaction(Existing, Incoming);
-	if (!Target.ReceiveElementDamage(&Source, Damage * (Rule ? Rule->Multiplier : 1.f), Module.Element)) return false;
+	if (!Target.ReceiveElementDamage(&Source, Damage * (Rule ? Rule->Multiplier : 1.f), Element)) return false;
 	if (!Rule)
 	{
 		if (Module.Pattern == EAttackPattern::Freeze || (Existing == EElementalAura::Frozen && Incoming == EElementalAura::Chill))
@@ -106,4 +108,29 @@ bool AttackResolution::ApplyHit(ABaseCharacter& Source, ABaseCharacter& Target, 
 	Source.MulticastElementalReaction(Rule->Reaction, Position, Position);
 	UE_LOG(LogTemp, Log, TEXT("ElementalReaction: %s on %s"), *UEnum::GetValueAsString(Rule->Reaction), *Target.GetName());
 	return true;
+}
+
+EElementalReaction AttackResolution::ApplyEnvironmentHit(AActor& Source, UAbilitySystemComponent& SourceASC,
+	ABaseCharacter& Target, EDamageElement Element, float Damage)
+{
+	if (!Source.HasAuthority() || !Target.HasAuthority() || !Target.IsAlive()
+		|| Target.GetFaction() == ECharacterFaction::Neutral || SourceASC.GetAvatarActor() != &Source)
+		return EElementalReaction::None;
+
+	const EElementalAura Existing = Target.GetElementalAura();
+	const EElementalAura Incoming = AuraFor(Element);
+	const auto* Rule = FindReaction(Existing, Incoming);
+	if (Damage > 0.f && !Target.ReceiveEnvironmentDamage(Source, SourceASC,
+		Damage * (Rule ? Rule->Multiplier : 1.f), Element)) return EElementalReaction::None;
+	if (!Rule)
+	{
+		if (Incoming != EElementalAura::None && Existing != EElementalAura::Frozen)
+			Target.ApplyEnvironmentAura(Source, SourceASC, Incoming);
+		return EElementalReaction::None;
+	}
+	Target.ClearElementalAura(Existing);
+	if (Rule->Reaction == EElementalReaction::Freeze)
+		Target.ApplyEnvironmentAura(Source, SourceASC, EElementalAura::Frozen);
+	UE_LOG(LogTemp, Log, TEXT("EnvironmentReaction: %s on %s"), *UEnum::GetValueAsString(Rule->Reaction), *Target.GetName());
+	return Rule->Reaction;
 }

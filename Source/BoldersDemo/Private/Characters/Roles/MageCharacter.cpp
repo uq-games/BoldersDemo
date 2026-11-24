@@ -3,4 +3,5 @@
 AMageCharacter::AMageCharacter()
 {
 	Faction = ECharacterFaction::Player;
+	CombatModelScale = 1.25f;
 }

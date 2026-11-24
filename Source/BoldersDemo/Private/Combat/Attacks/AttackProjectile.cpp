@@ -3,6 +3,8 @@
 #include "Combat/Presentation/AttackPresentation.h"
 #include "Combat/CharacterCombatComponent.h"
 #include "Combat/Attacks/AttackResolution.h"
+#include "Combat/Environment/CombatCollision.h"
+#include "Combat/Environment/VolcanoHazard.h"
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "GameFramework/ProjectileMovementComponent.h"
@@ -27,9 +29,11 @@ AAttackProjectile::AAttackProjectile()
 	Collision->SetCollisionResponseToChannel(ECC_WorldStatic, ECR_Block);
 	Collision->SetCollisionResponseToChannel(ECC_WorldDynamic, ECR_Block);
 	Collision->SetCollisionResponseToChannel(ECC_PhysicsBody, ECR_Block);
-	Collision->SetCollisionResponseToChannel(ECC_Pawn, ECR_Block);
+	Collision->SetCollisionResponseToChannel(ECC_Pawn, ECR_Overlap);
+	Collision->SetCollisionResponseToChannel(BoldersCollision::Interactable, ECR_Block);
 	Collision->SetCanEverAffectNavigation(false);
 	Collision->OnComponentHit.AddDynamic(this, &ThisClass::OnImpact);
+	Collision->OnComponentBeginOverlap.AddDynamic(this, &ThisClass::OnPawnOverlap);
 	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
 	Mesh->SetupAttachment(Collision);
 	Mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
@@ -183,6 +187,24 @@ void AAttackProjectile::Bounce(const FVector& Location, const FAttackModule& Mod
 
 void AAttackProjectile::OnImpact(UPrimitiveComponent*, AActor* OtherActor, UPrimitiveComponent* OtherBody, FVector, const FHitResult& Hit)
 {
+	ResolveImpact(OtherActor, OtherBody, Hit.ImpactPoint, Hit.ImpactNormal, Hit.Location);
+}
+
+void AAttackProjectile::OnPawnOverlap(UPrimitiveComponent*, AActor* OtherActor, UPrimitiveComponent* OtherBody,
+	int32, bool bFromSweep, const FHitResult& Hit)
+{
+	const auto* Source = Shooter.Get();
+	const auto* Victim = Cast<ABaseCharacter>(OtherActor);
+	if (!HasAuthority() || bImpacted || !Source || !Victim || !Victim->IsAlive() || !Source->IsHostileTo(Victim)
+		|| HitCharacters.Contains(Victim)) return;
+	const FVector Point = bFromSweep ? FVector(Hit.ImpactPoint) : GetActorLocation();
+	const FVector Normal = bFromSweep ? FVector(Hit.ImpactNormal) : -GetActorForwardVector();
+	ResolveImpact(OtherActor, OtherBody, Point, Normal, GetActorLocation());
+}
+
+void AAttackProjectile::ResolveImpact(AActor* OtherActor, UPrimitiveComponent* OtherBody,
+	const FVector& Point, const FVector& Normal, const FVector& SweepEnd)
+{
 	if (!HasAuthority() || bImpacted || OtherActor == Shooter.Get()) return;
 	bImpacted = true;
 	ABaseCharacter* Source = Shooter.Get();
@@ -190,10 +212,11 @@ void AAttackProjectile::OnImpact(UPrimitiveComponent*, AActor* OtherActor, UPrim
 	const FAttackModule* Module = GetModule();
 	if (Source && Module)
 	{
-		const FVector Point = Hit.ImpactPoint;
+		auto* Hazard = Cast<AVolcanoHazard>(OtherActor);
+		if (Hazard && Module->Pattern != EAttackPattern::Blast) Hazard->ReceiveAttack(Source, Module->Element);
 		if (Module->Pattern == EAttackPattern::Blast)
 		{
-			const FVector BlastOrigin = Point + Hit.ImpactNormal * 8.f;
+			const FVector BlastOrigin = Point + Normal * 8.f;
 			FElementalHitBatch Batch;
 			TArray<TPair<ABaseCharacter*, float>> Victims;
 			for (ABaseCharacter* Target : AttackResolution::FindTargets(*Source, BlastOrigin, Module->Radius))
@@ -211,10 +234,12 @@ void AAttackProjectile::OnImpact(UPrimitiveComponent*, AActor* OtherActor, UPrim
 			for (const auto& Entry : Victims)
 				AttackResolution::ApplyHit(*Source, *Entry.Key, *Module, Entry.Value, &Batch, this);
 			AttackResolution::ApplyPressure(*Source, BlastOrigin, GetActorForwardVector(), Module->Radius, Module->ImpactPush, Batch, this);
+			if (Hazard) Hazard->ReceiveAttack(Source, Module->Element);
+			AttackResolution::TriggerHazardsInArea(*Source, BlastOrigin, Module->Radius, Module->Element, Hazard);
 		}
 		else if (Module->Pattern == EAttackPattern::Wave)
 		{
-			CheckWavePath(Hit.Location);
+			CheckWavePath(SweepEnd);
 			if (OtherBody && OtherBody->IsSimulatingPhysics() && Module->ImpactPush > 0.f)
 				OtherBody->AddImpulse(GetActorForwardVector() * Module->ImpactPush, NAME_None, true);
 		}
@@ -228,7 +253,12 @@ void AAttackProjectile::OnImpact(UPrimitiveComponent*, AActor* OtherActor, UPrim
 	}
 	else if (Source && IsValid(Victim))
 	{
-		Victim->ReceiveDamageAt(Source, ShotDamage, Hit.ImpactPoint);
+		Victim->ReceiveDamageAt(Source, ShotDamage, Point);
+	}
+	else if (Source)
+	{
+		if (auto* Interactive = Cast<AVolcanoHazard>(OtherActor))
+			Interactive->ReceiveAttack(Source, EDamageElement::Physical);
 	}
 	Destroy();
 }

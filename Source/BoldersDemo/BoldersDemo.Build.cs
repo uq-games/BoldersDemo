@@ -13,7 +13,7 @@ public class BoldersDemo : ModuleRules
 		PrivateDependencyModuleNames.AddRange(new string[] { "NavigationSystem", "Niagara", "ProceduralMeshComponent", "SlateCore", "Slate" });
 		if (Target.bBuildEditor)
 		{
-			PrivateDependencyModuleNames.AddRange(new string[] { "UnrealEd", "AnimGraph", "AnimGraphRuntime", "BlueprintGraph", "AssetTools", "EditorScriptingUtilities", "UMGEditor" });
+			PrivateDependencyModuleNames.AddRange(new string[] { "UnrealEd", "AnimGraph", "AnimGraphRuntime", "BlueprintGraph", "AssetTools", "EditorScriptingUtilities", "NiagaraEditor", "UMGEditor" });
 		}
 
 		// Uncomment if you are using Slate UI

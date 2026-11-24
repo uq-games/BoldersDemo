@@ -1,16 +1,47 @@
 #include "Characters/BaseCharacter.h"
 
+#include "Animation/AnimInstance.h"
 #include "Animation/AnimMontage.h"
 #include "Camera/PlayerCameraManager.h"
 #include "Combat/CharacterCombatComponent.h"
 #include "Combat/Presentation/AttackPresentation.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/MeshComponent.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMeshActor.h"
 #include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
 #include "Materials/MaterialInstanceDynamic.h"
+
+void ABaseCharacter::ClientPlayBasicAttackMontage_Implementation(UAnimMontage* Montage, float StartPosition, FRotator Facing)
+{
+	if (GetNetMode() != NM_Client || !IsLocallyControlled() || !IsAlive() || !IsValid(Montage)) return;
+	UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance();
+	if (!AnimInstance || AnimInstance->Montage_Play(Montage, 1.f, EMontagePlayReturnType::MontageLength, StartPosition) <= 0.f)
+		return;
+
+	SetActorRotation(Facing);
+	if (FAnimMontageInstance* Instance = AnimInstance->GetActiveInstanceForMontage(Montage))
+	{
+		LocalAttackMontageInstanceId = Instance->GetInstanceID();
+		// The owner replays the pose and cosmetic notifies. The server still owns movement and hits.
+		Instance->PushDisableRootMotion();
+	}
+}
+
+void ABaseCharacter::ClientStopBasicAttackMontage_Implementation()
+{
+	if (LocalAttackMontageInstanceId == INDEX_NONE) return;
+	const int32 InstanceId = LocalAttackMontageInstanceId;
+	LocalAttackMontageInstanceId = INDEX_NONE;
+	if (UAnimInstance* AnimInstance = GetMesh()->GetAnimInstance())
+	{
+		FAnimMontageInstance* Instance = AnimInstance->GetMontageInstanceForID(InstanceId);
+		// A hit reaction or another local montage may already have replaced this attack.
+		if (Instance && Instance->Montage && !Instance->IsStopped()) Instance->Stop(Instance->Montage->BlendOut);
+	}
+}
 
 void ABaseCharacter::MulticastModuleVisual_Implementation(FName ModuleId, EAttackVisualStage Stage,
 	FVector_NetQuantize Location, FVector_NetQuantize End)

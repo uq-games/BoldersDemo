@@ -22,7 +22,8 @@ public:
 	virtual void EndAbility(const FGameplayAbilitySpecHandle Handle, const FGameplayAbilityActorInfo* ActorInfo,
 		const FGameplayAbilityActivationInfo ActivationInfo, bool bReplicateEndAbility, bool bWasCancelled) override;
 private:
-	bool IsTargetInReach() const;
+	bool GetSafeMuzzle(FVector& Start, FVector& Direction) const;
+	bool IsTargetInReach(float ContactTolerance = 0.f) const;
 	float GetAttackRange() const;
 	const FAttackModule* GetModule() const;
 	void OnPositionReady(bool bArrived);
@@ -32,9 +33,10 @@ private:
 	UFUNCTION() void OnMontageInterrupted();
 	void Finish(bool bCancelled);
 	UPROPERTY(Transient) TWeakObjectPtr<ABaseCharacter> Attacker;
-	UPROPERTY(Transient) TWeakObjectPtr<ABaseCharacter> Target;
+	UPROPERTY(Transient) TWeakObjectPtr<AActor> Target;
 	UPROPERTY(Transient) TWeakObjectPtr<AWeapon> Weapon;
 	FName ModuleId;
 	FVector SkyStrikeAim = FVector::ZeroVector;
 	bool bHitPending = false;
+	bool bOwnerMontageSent = false;
 };

@@ -3,6 +3,7 @@
 #include "Characters/Roles/WarriorCharacter.h"
 #include "EngineUtils.h"
 #include "Engine/TargetPoint.h"
+#include "Game/VolcanoEncounter.h"
 #include "Player/BoldersPlayerController.h"
 #include "UI/ClassSelection/ClassSelectionData.h"
 
@@ -78,6 +79,20 @@ bool ABoldersGameMode::SpawnAssignedCharacter(ABoldersPlayerController* PC, TSub
 	auto* Character = GetWorld()->SpawnActor<ABaseCharacter>(CharacterClass, Starts[SlotIndex]->GetActorTransform(), Params);
 	if (!Character) return false;
 	Character->PlayerSlot = PC->GetPlayerSlot();
+	if (PC->UsesDirectCombatControls())
+	{
+		APawn* LobbyCamera = PC->GetPawn();
+		auto* SpawnedAI = Cast<AAIController>(Character->GetController());
+		if (SpawnedAI) SpawnedAI->UnPossess();
+		PC->Possess(Character);
+		if (SpawnedAI) SpawnedAI->Destroy();
+		if (PC->GetPawn() != Character)
+		{
+			Character->Destroy();
+			return false;
+		}
+		if (IsValid(LobbyCamera)) LobbyCamera->Destroy();
+	}
 	PC->AssignCharacter(Character);
 	UE_LOG(LogTemp, Log, TEXT("WarriorSpawn: %dP (%s) assigned %s"),
 		PC->GetPlayerSlot(), *PC->GetName(), *Character->GetName());

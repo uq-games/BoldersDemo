@@ -2,9 +2,17 @@
 #include "AIController.h"
 #include "Characters/BaseCharacter.h"
 #include "AI/Positioning/AttackPositionRules.h"
+#include "Engine/World.h"
 #include "EnvironmentQuery/EnvQuery.h"
 #include "EnvironmentQuery/EnvQueryManager.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "TimerManager.h"
+
+namespace
+{
+	constexpr float WarningRetryInterval = .20f;
+	constexpr double WarningRetryWindow = 1.10;
+}
 
 UAttackPositioningComponent::UAttackPositioningComponent()
 {
@@ -17,16 +25,17 @@ void UAttackPositioningComponent::EndPlay(const EEndPlayReason::Type Reason)
 	Super::EndPlay(Reason);
 }
 
-bool UAttackPositioningComponent::RequestPosition(ABaseCharacter* Target, float WeaponRange,
+bool UAttackPositioningComponent::RequestPosition(AActor* Target, float WeaponRange,
 	UEnvQuery* Query, FOnAttackPositionReady OnReady)
 {
 	auto* Character = Cast<ABaseCharacter>(GetOwner());
 	if (!Character || !Character->HasAuthority()) return false;
 	Cancel();
-	if (!Character->IsAlive() || !IsValid(Target) || !Target->IsAlive()
+	if (!Character->IsAlive() || Character->IsFrozen() || !AttackPositionRules::CanTarget(*Character, Target)
 		|| !Query || !FMath::IsFinite(WeaponRange) || WeaponRange < 0.f) return false;
 
-	TargetCharacter = Target;
+	AttackTarget = Target;
+	ApproachQuery = Query;
 	AttackRange = WeaponRange;
 	Completion = MoveTemp(OnReady);
 	if (auto* AI = Cast<AAIController>(Character->GetController())) AI->StopMovement();
@@ -38,7 +47,7 @@ bool UAttackPositioningComponent::RequestPosition(ABaseCharacter* Target, float 
 bool UAttackPositioningComponent::StartQuery(UEnvQuery* Query)
 {
 	const auto* Character = CastChecked<ABaseCharacter>(GetOwner());
-	const float Reach = AttackPositionRules::GetReach(*Character, *TargetCharacter, AttackRange);
+	const float Reach = AttackPositionRules::GetReach(*Character, *AttackTarget, AttackRange);
 	FEnvQueryRequest Request(Query, GetOwner());
 	Request.SetFloatParam(TEXT("InnerRadius"), FMath::Max(Reach - 40.f, 1.f));
 	Request.SetFloatParam(TEXT("OuterRadius"), FMath::Max(Reach - 25.f, 1.f));
@@ -49,7 +58,7 @@ bool UAttackPositioningComponent::StartQuery(UEnvQuery* Query)
 bool UAttackPositioningComponent::IsCandidateValid(const FVector& NavLocation) const
 {
 	const auto* Character = Cast<ABaseCharacter>(GetOwner());
-	const auto* Target = TargetCharacter.Get();
+	const auto* Target = AttackTarget.Get();
 	return Character && Character->IsAlive() && Target
 		&& AttackPositionRules::CanStandAndAttack(*Character, *Target, AttackRange, NavLocation);
 }
@@ -60,11 +69,61 @@ void UAttackPositioningComponent::OnQueryFinished(TSharedPtr<FEnvQueryResult> Re
 	QueryID = INDEX_NONE;
 	if (!Result->IsSuccessful() || !IsCandidateValid(Result->GetItemAsLocation(0)))
 	{
-		UE_LOG(LogTemp, Log, TEXT("AttackEQS: no attack position"));
+		if ((Result->IsSuccessful() || Result->GetRawStatus() == EEnvQueryStatus::Failed)
+			&& ScheduleWarningRetry()) return;
+		UE_LOG(LogTemp, Log, TEXT("AttackEQS: no attack position%s (%s -> %s)"),
+			WarningRetryDeadline > 0.0 ? TEXT(" after warning retry") : TEXT(""),
+			*GetNameSafe(GetOwner()), *GetNameSafe(AttackTarget.Get()));
 		Finish(false);
 		return;
 	}
+	if (WarningRetryDeadline > 0.0)
+	{
+		UE_LOG(LogTemp, Log, TEXT("AttackEQS: %s found an attack position on warning retry for %s"),
+			*GetNameSafe(GetOwner()), *GetNameSafe(AttackTarget.Get()));
+	}
 	MoveToPosition(Result->GetItemAsLocation(0));
+}
+
+bool UAttackPositioningComponent::ScheduleWarningRetry()
+{
+	UWorld* World = GetWorld();
+	const auto* Character = Cast<ABaseCharacter>(GetOwner());
+	const auto* Target = AttackTarget.Get();
+	if (!World || !Character || !Character->HasAuthority() || !Character->IsAlive() || Character->IsFrozen()
+		|| !ApproachQuery.IsValid() || !AttackPositionRules::CanTarget(*Character, Target)) return false;
+
+	const double Now = World->GetTimeSeconds();
+	if (WarningRetryDeadline > 0.0 && Now + WarningRetryInterval > WarningRetryDeadline) return false;
+
+	const FVector Start = Character->GetCharacterMovement()->GetActorFeetLocation();
+	const auto* TargetCharacter = Cast<ABaseCharacter>(Target);
+	const FVector End = TargetCharacter ? TargetCharacter->GetCharacterMovement()->GetActorFeetLocation()
+		: AttackPositionRules::GetAttackPoint(*Target);
+	const AttackPositionRules::FApproachWarnings Warnings(*Character);
+	if (Warnings.IsPointSafe(Start) && Warnings.IsPointSafe(End) && Warnings.IsPointSafe(FMath::Lerp(Start, End, .5)))
+		return false;
+
+	if (WarningRetryDeadline == 0.0)
+	{
+		WarningRetryDeadline = Now + WarningRetryWindow;
+		UE_LOG(LogTemp, Log, TEXT("AttackEQS: %s waiting on an active warning to approach %s"),
+			*Character->GetName(), *Target->GetName());
+	}
+	World->GetTimerManager().SetTimer(WarningRetryTimer, this, &ThisClass::RetryQuery, WarningRetryInterval, false);
+	return true;
+}
+
+void UAttackPositioningComponent::RetryQuery()
+{
+	const UWorld* World = GetWorld();
+	const auto* Character = Cast<ABaseCharacter>(GetOwner());
+	UEnvQuery* Query = ApproachQuery.Get();
+	// The warning can clear during the wait. The resubmitted query checks live safety again.
+	if (World && World->GetTimeSeconds() <= WarningRetryDeadline && Character && Character->HasAuthority()
+		&& Character->IsAlive() && !Character->IsFrozen() && Query
+		&& AttackPositionRules::CanTarget(*Character, AttackTarget.Get()) && StartQuery(Query)) return;
+	Finish(false);
 }
 
 void UAttackPositioningComponent::MoveToPosition(const FVector& Destination)
@@ -99,14 +158,24 @@ void UAttackPositioningComponent::OnCharacterMoved(float DeltaSeconds, FVector O
 	const auto* PathFollowing = BoundPathFollowing.Get();
 	if (!Character->HasAuthority() || !MoveID.IsValid() || !PathFollowing
 		|| PathFollowing->GetCurrentRequestId() != MoveID) return;
-	const auto* Target = TargetCharacter.Get();
-	if (!Character->IsAlive() || !Target || !Target->IsAlive()) { Finish(false); return; }
+	const auto* Target = AttackTarget.Get();
+	if (!Character->IsAlive() || !AttackPositionRules::CanTarget(*Character, Target)) { Finish(false); return; }
 	if (!Character->GetCharacterMovement()->IsMovingOnGround()) return;
+	const FVector Ground = Character->GetCharacterMovement()->GetActorFeetLocation();
+	const AttackPositionRules::FApproachWarnings ApproachWarnings(*Character);
+	const bool bSafeHere = ApproachWarnings.IsPointSafe(Ground);
+	const float Lookahead = FMath::Max(.18f, DeltaSeconds * 1.5f);
+	if (bSafeHere && !ApproachWarnings.IsPointSafe(Ground + Character->GetVelocity() * Lookahead))
+	{
+		UE_LOG(LogTemp, Log, TEXT("AttackApproach: %s halted at an active warning"), *Character->GetName());
+		Finish(false);
+		return;
+	}
 
 	// Finish in the valid attack region, not only at the sampled EQS coordinate.
 	// A small inset keeps the subsequent hit check away from the range boundary.
 	const float StopRange = FMath::Max(0.f, AttackRange - 5.f);
-	if (AttackPositionRules::CanAttack(*Character, *Target, StopRange, Character->GetActorLocation()))
+	if (bSafeHere && AttackPositionRules::CanAttack(*Character, *Target, StopRange, Character->GetActorLocation()))
 	{
 		UE_LOG(LogTemp, Log, TEXT("AttackApproach: %s ready at %s distance=%.1f"),
 			*Character->GetName(), *Character->GetActorLocation().ToCompactString(),
@@ -120,7 +189,9 @@ void UAttackPositioningComponent::OnMoveFinished(FAIRequestID RequestID, const F
 {
 	if (RequestID != MoveID) return;
 	MoveID = FAIRequestID::InvalidRequest;
-	Finish(Result.IsSuccess());
+	const auto* Character = CastChecked<ABaseCharacter>(GetOwner());
+	Finish(Result.IsSuccess() && AttackPositionRules::FApproachWarnings(*Character).IsPointSafe(
+		Character->GetCharacterMovement()->GetActorFeetLocation()));
 }
 
 void UAttackPositioningComponent::UnbindMovement()
@@ -139,8 +210,12 @@ void UAttackPositioningComponent::UnbindMovement()
 
 void UAttackPositioningComponent::Cancel()
 {
+	if (UWorld* World = GetWorld(); World && WarningRetryTimer.IsValid())
+		World->GetTimerManager().ClearTimer(WarningRetryTimer);
+	WarningRetryDeadline = 0.0;
+	ApproachQuery.Reset();
 	Completion.Unbind();
-	TargetCharacter.Reset();
+	AttackTarget.Reset();
 	const int32 OldQueryID = QueryID;
 	QueryID = INDEX_NONE;
 	if (OldQueryID != INDEX_NONE)

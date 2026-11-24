@@ -7,7 +7,9 @@
 #include "Combat/Equipment/Weapon.h"
 #include "Combat/Attacks/AttackResolution.h"
 #include "Combat/Presentation/AttackFlightParticles.h"
+#include "Combat/Presentation/CombatGuideStyle.h"
 #include "Components/StaticMeshComponent.h"
+#include "Engine/DecalActor.h"
 #include "Engine/StaticMeshActor.h"
 #include "Engine/World.h"
 #include "GameFramework/ProjectileMovementComponent.h"
@@ -82,6 +84,32 @@ namespace
 			FRotationMatrix::MakeFromZ(Normal).Rotator(), {Diameter, Diameter, 1.f}, Lifetime);
 	}
 
+	ADecalActor* PlaceSkyStrikeMarker(const ABaseCharacter& Source, const FAttackModule& Module,
+		const FVector& Aim, float Duration)
+	{
+		static const TSoftObjectPtr<UMaterialInterface> GroundReach{FSoftObjectPath(CombatGuideStyle::ReachMaterialPath)};
+		UMaterialInterface* Material = GroundReach.LoadSynchronous();
+		if (!Material || Module.Radius <= 0.f || Duration <= 0.f) return nullptr;
+		FActorSpawnParameters Params;
+		Params.CustomPreSpawnInitialization = [DecalMaterial = Material](AActor* Actor)
+		{
+			CastChecked<ADecalActor>(Actor)->GetDecal()->SetDecalMaterial(DecalMaterial);
+		};
+		auto* Mark = Source.GetWorld()->SpawnActor<ADecalActor>(Aim, FRotator::ZeroRotator, Params);
+		if (!Mark) return nullptr;
+		Mark->SetLifeSpan(Duration);
+		auto* Decal = Mark->GetDecal();
+		Decal->SetSortOrder(CombatGuideStyle::FootprintSort);
+		Decal->FadeScreenSize = 0.f;
+		CombatGuideStyle::PlaceGroundDecal(*Decal, Aim, FVector::ForwardVector, Module.Radius, Module.Radius, 85.f);
+		if (auto* Instance = Decal->CreateDynamicMaterialInstance())
+		{
+			Instance->SetScalarParameterValue(TEXT("MarkStyle"), 2.f);
+			Instance->SetVectorParameterValue(TEXT("RingColor"), CombatGuideStyle::ElementColor(Module.Element));
+		}
+		return Mark;
+	}
+
 	void DrawBeam(const AActor& Source, UMaterialInterface* Material, const FVector& From, const FVector& To,
 		float Width, float Lifetime)
 	{
@@ -113,6 +141,31 @@ namespace
 			Movement->RegisterComponent();
 		}
 	}
+}
+
+void AttackPresentation::PlayBladeCoating(ABaseCharacter& Source, EDamageElement Element, const FVector& Contact, const FVector& Blade)
+{
+	static const TSoftObjectPtr<UNiagaraSystem> Foam(FSoftObjectPath(
+		TEXT("/Game/BoldersDemo/Assets/Combat/Effects/Elemental/NS_Impact_Foam.NS_Impact_Foam")));
+	static const TSoftObjectPtr<UNiagaraSystem> Frost(FSoftObjectPath(
+		TEXT("/Game/BoldersDemo/Assets/Combat/Effects/Elemental/NS_Impact_Frost.NS_Impact_Frost")));
+	static const TSoftObjectPtr<UNiagaraSystem> Thunder(FSoftObjectPath(
+		TEXT("/Game/BoldersDemo/Assets/Combat/Effects/Elemental/NS_Impact_Thunder.NS_Impact_Thunder")));
+	static const TSoftObjectPtr<UMaterialInterface> Ripple(FSoftObjectPath(
+		TEXT("/Game/BoldersDemo/Assets/Combat/Effects/Elemental/M_WaterWake.M_WaterWake")));
+	static const TSoftObjectPtr<UMaterialInterface> Arc(FSoftObjectPath(
+		TEXT("/Game/BoldersDemo/Assets/Combat/Effects/Elemental/M_ReactionConductionArc.M_ReactionConductionArc")));
+	const bool bDip = !Contact.Equals(Blade);
+	const auto& Particles = Element == EDamageElement::Ice ? Frost : Element == EDamageElement::Lightning ? Thunder : Foam;
+	if (auto* System = Particles.LoadSynchronous())
+	{
+		UNiagaraFunctionLibrary::SpawnSystemAtLocation(&Source, System, Contact, FRotator(78, 0, 0), FVector(bDip ? .67f : .8f));
+		if (bDip)
+			UNiagaraFunctionLibrary::SpawnSystemAtLocation(&Source, System, Blade, FRotator(65, 0, 0), FVector(.42f));
+	}
+	if (bDip)
+		DrawBeam(Source, Element == EDamageElement::Lightning ? Arc.LoadSynchronous() : Ripple.LoadSynchronous(),
+			Contact, Blade, 27.f, .24f);
 }
 
 void AttackPresentation::Play(ABaseCharacter& Source, const FAttackModule& Module, EAttackVisualStage Stage,
@@ -165,7 +218,7 @@ AActor* AttackPresentation::PlayWindup(ABaseCharacter& Source, const FAttackModu
 {
 	// The lightning marker runs during the gesture and is cleared at release or cancel.
 	AActor* Visual = Module.Pattern == EAttackPattern::SkyStrike
-		? PlaceGroundMark(Source, Module.GroundMark, Module.Radius, Aim, Duration) : nullptr;
+		? PlaceSkyStrikeMarker(Source, Module, Aim, Duration) : nullptr;
 	const AWeapon* Weapon = Source.Combat->GetWeapon();
 	if (!Weapon || !Module.ImpactParticles) return Visual;
 	if (!Visual)
@@ -192,7 +245,7 @@ AActor* AttackPresentation::PlayWindup(ABaseCharacter& Source, const FAttackModu
 	return Visual;
 }
 
-void AttackPresentation::PlayReaction(ABaseCharacter& Source, const UElementalReactionAppearance& Appearance,
+void AttackPresentation::PlayReaction(AActor& Source, const UElementalReactionAppearance& Appearance,
 	EElementalReaction Reaction, const FVector& Location, const FVector& End)
 {
 	const auto* Style = Appearance.Reactions.FindByPredicate([Reaction](const FReactionAppearance& Entry)

@@ -6,9 +6,9 @@ Create a polished widescreen 16:9 game opening CHARACTER CLASS SELECTION interfa
 Art direction: tasteful dark charcoal/navy panels, restrained antique gold borders, warm ivory Chinese text, subtle teal selection glow, evocative but subdued low-poly ruined courtyard in the background. Clear professional composition, ample spacing, legible clean Chinese typography. Match chunky charming low-poly miniature adventurer characters (simple rounded faces, faceted geometry, no photorealism, no anime portraits).
 Top center heading exact Chinese: "选择你的职业". Under it smaller: "每位玩家控制一名角色".
 Main content: three equally sized large portrait cards arranged horizontally, with FULL BODY low-poly characters standing on simple stone plinths. Left is a sturdy warrior in steel and muted blue armor, holding a short sword and round shield. Middle is an agile brown-haired archer in teal and leather clothing holding a bow, quiver on back. Right is a mage in a deep purple robe with large pointed hat and wooden staff with a subtle blue magical glow. Faces and silhouettes clearly distinguish the classes.
-Left card title "战士"; subtitle "近战 · 剑盾"; short line "靠近敌人，挥剑攻击".
-Middle card title "弓箭手"; subtitle "远程 · 弓箭"; short line "拉弓射击，保持距离". This middle card is selected: crisp teal/gold illuminated frame, small checkmark, small label "已选择".
-Right card title "法师"; subtitle "远程 · 魔法"; short line "施放魔法弹，远程攻击".
+Left card title "战士"; subtitle "近战 剑盾"; short line "靠近敌人，挥剑攻击".
+Middle card title "弓箭手"; subtitle "远程 弓箭"; short line "拉弓射击，保持距离". This middle card is selected: crisp teal/gold illuminated frame, small checkmark, small label "已选择".
+Right card title "法师"; subtitle "远程 魔法"; short line "施放魔法弹，远程攻击".
 Small top-left BoldersDemo wordmark, top-right a subtle "玩家 1" badge.
 Bottom center large attractive gold bordered button exact text "确认职业"; directly above or beside it small selected summary "当前选择：弓箭手". Bottom-left subtle "返回" button. Keep buttons physically plausible, sufficient hit area, hierarchy and baseline alignment.
 Avoid extra classes, abilities not in this demo, skill trees, invented numerical stats, currencies, inventory, login fields, busy excessive ornaments, UI developer labels, tiny unreadable text, watermarks. Render all given Chinese labels accurately. Highest quality game UI art direction; coherent 3D character lighting and crisp 2D UI.

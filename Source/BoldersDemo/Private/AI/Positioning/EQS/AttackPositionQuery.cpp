@@ -7,6 +7,7 @@
 #include "NavFilters/NavigationQueryFilter.h"
 #include "EnvironmentQuery/Items/EnvQueryItemType_Actor.h"
 #include "EnvironmentQuery/Items/EnvQueryItemType_Point.h"
+#include "ProfilingDebugging/CpuProfilerTrace.h"
 
 namespace
 {
@@ -61,22 +62,27 @@ UEnvQueryTest_AttackPath::UEnvQueryTest_AttackPath()
 
 void UEnvQueryTest_AttackPath::RunTest(FEnvQueryInstance& Query) const
 {
+	TRACE_CPUPROFILER_EVENT_SCOPE(BoldersAttackPathQuery);
 	const auto* Character = Cast<ABaseCharacter>(Query.Owner.Get());
 	const auto* Positioning = GetPositioning(Query);
 	const auto* Target = Positioning ? Positioning->GetTarget() : nullptr;
 	auto* Navigation = FNavigationSystem::GetCurrent<UNavigationSystemV1>(Query.World);
 	const auto* NavData = Character && Navigation
 		? Navigation->GetNavDataForProps(Character->GetNavAgentPropertiesRef(), Character->GetNavAgentLocation()) : nullptr;
+	if (!Target || !NavData)
+	{
+		for (FEnvQueryInstance::ItemIterator It(this, Query); It; ++It)
+			It.ForceItemState(EEnvItemStatus::Failed);
+		return;
+	}
+
+	const auto Filter = UNavigationQueryFilter::GetQueryFilter(*NavData, Character, nullptr);
+	const FVector Start = Character->GetNavAgentLocation();
+	const AttackPositionRules::FApproachWarnings ApproachWarnings(*Character);
+	TArray<FVector> Points;
 	for (FEnvQueryInstance::ItemIterator It(this, Query); It; ++It)
 	{
-		if (!Character || !Target || !NavData)
-		{
-			It.ForceItemState(EEnvItemStatus::Failed);
-			continue;
-		}
-		const auto Filter = UNavigationQueryFilter::GetQueryFilter(*NavData, Character, nullptr);
-		FPathFindingQuery PathQuery(Character, *NavData, Character->GetNavAgentLocation(),
-			GetItemLocation(Query, It.GetIndex()), Filter);
+		FPathFindingQuery PathQuery(Character, *NavData, Start, GetItemLocation(Query, It.GetIndex()), Filter);
 		PathQuery.SetAllowPartialPaths(false);
 		const FPathFindingResult Result = Navigation->FindPathSync(Character->GetNavAgentPropertiesRef(), PathQuery);
 		if (!Result.IsSuccessful() || !Result.Path.IsValid() || Result.Path->IsPartial())
@@ -84,9 +90,10 @@ void UEnvQueryTest_AttackPath::RunTest(FEnvQueryInstance& Query) const
 			It.ForceItemState(EEnvItemStatus::Failed);
 			continue;
 		}
-		TArray<FVector> Points;
+		Points.Reset(Result.Path->GetPathPoints().Num());
 		for (const FNavPathPoint& Point : Result.Path->GetPathPoints()) Points.Add(Point.Location);
-		if (!AttackPositionRules::IsPathClearOfTarget(*Character, *Target, Points))
+		if (!AttackPositionRules::IsPathClearOfTarget(*Character, *Target, Points)
+			|| !ApproachWarnings.IsPathSafe(Points))
 		{
 			It.ForceItemState(EEnvItemStatus::Failed);
 			continue;

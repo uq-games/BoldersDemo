@@ -175,15 +175,17 @@ void RemoveWidgets(UWidgetBlueprint& Blueprint, std::initializer_list<const TCHA
 	}
 }
 
+const FVector2D ClassCardSize(308, 454);
+
 void BuildCard(UWidgetBlueprint& BP, UTexture2D& Controls)
 {
 	RemoveWidgets(BP, {TEXT("NameText"), TEXT("RoleText"), TEXT("DescriptionText"), TEXT("SelectionText")});
 	auto* Root = Widget<UCanvasPanel>(BP, TEXT("CardRoot"));
 	BP.WidgetTree->RootWidget = Root;
-	Picture(BP, *Root, TEXT("Frame"), nullptr, {-10, -10}, {396, 574}, -1);
+	Picture(BP, *Root, TEXT("Frame"), nullptr, {-7, -7}, ClassCardSize + FVector2D(14), -1);
 	auto* Button = Widget<UButton>(BP, TEXT("CardButton"));
 	TransparentButton(*Button);
-	Place(*Root, *Button, FVector2D::ZeroVector, {376, 554});
+	Place(*Root, *Button, FVector2D::ZeroVector, ClassCardSize);
 	auto* Content = Widget<UCanvasPanel>(BP, TEXT("CardContent"));
 	Content->SetVisibility(ESlateVisibility::HitTestInvisible);
 	if (Content->GetParent() != Button) Button->SetContent(Content);
@@ -191,9 +193,9 @@ void BuildCard(UWidgetBlueprint& BP, UTexture2D& Controls)
 	ContentSlot->SetPadding(FMargin(0));
 	ContentSlot->SetHorizontalAlignment(HAlign_Fill);
 	ContentSlot->SetVerticalAlignment(VAlign_Fill);
-	Picture(BP, *Content, TEXT("Portrait"), nullptr, {13, 10}, {350, 370});
-	Picture(BP, *Content, TEXT("Caption"), nullptr, {85, 411}, {206, 96});
-	auto* Badge = Picture(BP, *Root, TEXT("ChosenBadge"), &Controls, {237, 13}, {126, 46}, 3,
+	Picture(BP, *Content, TEXT("Portrait"), nullptr, {12, 9}, {284, 318});
+	Picture(BP, *Content, TEXT("Caption"), nullptr, {70, 346}, {168, 76});
+	auto* Badge = Picture(BP, *Root, TEXT("ChosenBadge"), &Controls, {188, 12}, {107, 38}, 3,
 		AtlasRegion(ControlsAtlasSize, {636, 617, 1036, 766}));
 	Badge->SetVisibility(ESlateVisibility::Hidden);
 	SaveWidget(BP);
@@ -203,7 +205,7 @@ void BuildScreen(UWidgetBlueprint& BP, UWidgetBlueprint& Card, UTexture2D& Accen
 	UTexture2D& Controls, UTexture2D& Labels, UTexture2D& PlayerSlots)
 {
 	RemoveWidgets(BP, {
-		TEXT("Crest"), TEXT("GameTitle"), TEXT("Title"), TEXT("Subtitle"), TEXT("PlayerLabel"), TEXT("PlayerPlate"),
+		TEXT("Wordmark"), TEXT("Crest"), TEXT("GameTitle"), TEXT("Title"), TEXT("Subtitle"), TEXT("PlayerLabel"), TEXT("PlayerPlate"),
 		TEXT("ClearLabel"), TEXT("ConfirmLabel"), TEXT("StatusText"), TEXT("StatusRuleLeft"), TEXT("StatusRuleRight")
 	});
 
@@ -222,10 +224,7 @@ void BuildScreen(UWidgetBlueprint& BP, UWidgetBlueprint& Card, UTexture2D& Accen
 	auto* Canvas = Widget<UCanvasPanel>(BP, TEXT("Layout"));
 	if (Canvas->GetParent() != Size) Size->SetContent(Canvas);
 
-	// Text and bevels are authored together. The UV rectangles select individual atlas sprites.
-	Picture(BP, *Canvas, TEXT("Wordmark"), &Controls, {39, 23}, {255, 45}, 2,
-		AtlasRegion(ControlsAtlasSize, {44, 195, 535, 282}));
-	const FVector2D PlayerPlatePosition(1420, 21), PlayerPlateSize(139, 47);
+	const FVector2D PlayerPlatePosition(1282, 65), PlayerPlateSize(74, 60);
 	const FVector2f PlayerSlotsAtlasSize(2172.0f, 724.0f);
 	auto* HostPlate = Picture(BP, *Canvas, TEXT("HostPlate"), &PlayerSlots, PlayerPlatePosition, PlayerPlateSize, 2,
 		AtlasRegion(PlayerSlotsAtlasSize, {111, 212, 975, 512}));
@@ -233,15 +232,17 @@ void BuildScreen(UWidgetBlueprint& BP, UWidgetBlueprint& Card, UTexture2D& Accen
 		AtlasRegion(PlayerSlotsAtlasSize, {1197, 212, 2061, 512}));
 	HostPlate->SetVisibility(ESlateVisibility::Hidden);
 	GuestPlate->SetVisibility(ESlateVisibility::Hidden);
-	Picture(BP, *Canvas, TEXT("TitleArtwork"), &Labels, {645, 38}, {310, 94}, 2,
+	Picture(BP, *Canvas, TEXT("TitleArtwork"), &Labels, {568, 45}, {464, 139}, 2,
 		AtlasRegion(LabelsAtlasSize, {90, 103, 655, 273}));
 
 	const FBox2f RuleUV({.5353f, .6822f}, {.9270f, .7917f});
-	Picture(BP, *Canvas, TEXT("TitleRuleLeft"), &Accents, {421, 78}, {149, 19}, 1, RuleUV);
-	auto* RightRule = Picture(BP, *Canvas, TEXT("TitleRuleRight"), &Accents, {1030, 78}, {149, 19}, 1, RuleUV);
+	Picture(BP, *Canvas, TEXT("TitleRuleLeft"), &Accents, {506, 107}, {102, 13}, 1, RuleUV);
+	auto* RightRule = Picture(BP, *Canvas, TEXT("TitleRuleRight"), &Accents, {992, 107}, {102, 13}, 1, RuleUV);
 	RightRule->SetRenderScale(FVector2D(-1., 1.));
 
 	const FName CardNames[] = {TEXT("WarriorCard"), TEXT("ArcherCard"), TEXT("MageCard")};
+	constexpr double CardSpacing = 40.;
+	const double CardsLeft = (1600. - 3. * ClassCardSize.X - 2. * CardSpacing) / 2.;
 	for (int32 Index = 0; Index < UE_ARRAY_COUNT(CardNames); ++Index)
 	{
 		auto* Entry = BP.WidgetTree->FindWidget(CardNames[Index]);
@@ -251,24 +252,24 @@ void BuildScreen(UWidgetBlueprint& BP, UWidgetBlueprint& Card, UTexture2D& Accen
 			Entry->bIsVariable = true;
 			BP.OnVariableAdded(Entry->GetFName());
 		}
-		Place(*Canvas, *Entry, FVector2D(216 + Index * 396, 156), FVector2D(376, 554));
+		Place(*Canvas, *Entry, FVector2D(CardsLeft + Index * (ClassCardSize.X + CardSpacing), 212), ClassCardSize);
 	}
 
-	auto* Waiting = Picture(BP, *Canvas, TEXT("WaitingArtwork"), &Labels, {701, 710}, {198, 52}, 1,
+	auto* Waiting = Picture(BP, *Canvas, TEXT("WaitingArtwork"), &Labels, {704, 687}, {192, 37}, 1,
 		AtlasRegion(LabelsAtlasSize, {851, 478, 1333, 605}));
-	auto* Failure = Picture(BP, *Canvas, TEXT("FailureArtwork"), &Labels, {667.5, 710}, {265, 52}, 1,
+	auto* Failure = Picture(BP, *Canvas, TEXT("FailureArtwork"), &Labels, {681, 687}, {238, 37}, 1,
 		AtlasRegion(LabelsAtlasSize, {1491, 480, 2137, 606}));
 	Waiting->SetVisibility(ESlateVisibility::Hidden);
 	Failure->SetVisibility(ESlateVisibility::Hidden);
 
-	const FVector2D ConfirmPosition(595.5, 761), ConfirmSize(409, 108);
+	const FVector2D ConfirmPosition(758, 739), ConfirmSize(274, 77);
 	Picture(BP, *Canvas, TEXT("ConfirmImage"), &Controls, ConfirmPosition, ConfirmSize, 1,
 		AtlasRegion(ControlsAtlasSize, {553, 169, 1118, 321}));
 	auto* Confirm = Widget<UButton>(BP, TEXT("ConfirmButton"));
 	TransparentButton(*Confirm);
 	Place(*Canvas, *Confirm, ConfirmPosition, ConfirmSize, 2);
 
-	const FVector2D ClearPosition(39, 787), ClearSize(175, 54);
+	const FVector2D ClearPosition(568, 751), ClearSize(162, 53);
 	Picture(BP, *Canvas, TEXT("ClearPlate"), &Controls, ClearPosition, ClearSize, 1,
 		AtlasRegion(ControlsAtlasSize, {1150, 169, 1641, 321}));
 	auto* Clear = Widget<UButton>(BP, TEXT("ClearButton"));

@@ -49,6 +49,6 @@ GAS 根据 `Damage.Element.*` 读取目标对应的抗性，公式为 `实伤 = 
 - 在 `TestMap` 通过职业选择进入战斗，逐招检查伤害和命中时间。十种招式均通过，弹射箭三次分别造成 19、13.68、9.8496 点伤害，冻结箭的状态按时解除，落雷在预警后对两名范围内敌人各造成 38 点伤害。 [招式测试结果](../../Saved/ElementalCombat/RuntimeResults.json)
 - 双人 PIE 检查了客户端施法、伤害同步、双手剑换装与盾牌恢复，并验证未经授权的角色攻击和跨职业换招被拒绝。 [联机测试结果](../../Saved/ElementalCombat/NetworkResults.json)
 - 新版十招基础伤害回归全部通过。反应自动化覆盖六种元素正反组合、物理碎冰和墙体遮挡。 [新版招式回归](../../Saved/ElementalReactions/TenAttacksResults.json)
-- 缩短前摇后，`TestMap` 十招均通过。动作开始到释放实测为 0.235–0.300 秒。落雷在起手时标记落点，取消后立即撤下预警且没有造成伤害。 [前摇实测](../../Saved/AttackPacing/TenAttackTiming.json) · [落雷取消验证](../../Saved/AttackPacing/CancelLightning.json)
+- 缩短前摇后，`TestMap` 十招均通过。动作开始到释放实测为 0.235–0.300 秒。落雷在起手时标记落点，取消后立即撤下预警且没有造成伤害。 [前摇实测](../../Saved/AttackPacing/TenAttackTiming.json)，[落雷取消验证](../../Saved/AttackPacing/CancelLightning.json)
 - 在实机用法师复验六种元素反应。一轮水浪接火球中，蘑菇移动约 136.6 cm，桶移动约 74.4 cm。 [反应实测](../../Saved/ElementalReactions/RuntimeResults.json)
 - 双人 PIE 中，弓箭手冻结后由战士碎冰，双方看到目标生命值为 39.45。随后客户端爆炸箭推动了同一个桶，稳定后两端位置相差 1.85 cm。 [新版联机实测](../../Saved/ElementalReactions/NetworkResults.json)

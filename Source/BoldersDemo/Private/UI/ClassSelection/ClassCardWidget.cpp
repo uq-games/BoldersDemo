@@ -1,6 +1,7 @@
 #include "UI/ClassSelection/ClassCardWidget.h"
 #include "UI/ClassSelection/ClassSelectionData.h"
 #include "UI/ClassSelection/CharacterPreview.h"
+#include "UI/FoundryTypography.h"
 #include "Components/Button.h"
 #include "Components/Image.h"
 #include "Materials/MaterialInstanceDynamic.h"
@@ -28,6 +29,12 @@ void UClassCardWidget::Configure(UClassSelectionCatalog* Catalog, int32 Index)
 		Brush.SetResourceObject(Catalog->CaptionAtlas);
 		Brush.SetUVRegion(FBox2f(FVector2f(UV.X, UV.Y), FVector2f(UV.Z, UV.W)));
 		Caption->SetBrush(Brush);
+	}
+	if (const auto* Art = LoadObject<UFoundryTypography>(nullptr, UFoundryTypography::AssetPath, nullptr, LOAD_NoWarn))
+	{
+		const TCHAR* RoleCaption[] = {TEXT("Select.战士"), TEXT("Select.弓手"), TEXT("Select.法师")};
+		if (Index >= 0 && Index < UE_ARRAY_COUNT(RoleCaption)) Art->Apply(Caption, RoleCaption[Index]);
+		Art->Apply(ChosenBadge, TEXT("Select.✓ 已选择"));
 	}
 	NormalFrame = Catalog->CardFrame;
 	SelectedFrame = Catalog->SelectedCardFrame;
@@ -57,7 +64,8 @@ void UClassCardWidget::UpdateState()
 	if (Preview) Preview->SetDisplayState(bIsSelected ? 2 : bHover ? 1 : 0);
 	if (ChosenBadge) ChosenBadge->SetVisibility(bIsSelected ? ESlateVisibility::HitTestInvisible : ESlateVisibility::Hidden);
 	Frame->SetBrushFromTexture(bIsSelected && SelectedFrame ? SelectedFrame : NormalFrame);
-	Frame->SetColorAndOpacity(bHover && !bIsSelected ? FLinearColor(1.13f, 1.12f, 1.12f) : FLinearColor::White);
+	Frame->SetColorAndOpacity(bIsSelected ? FLinearColor(1.f, .94f, .82f)
+		: bHover ? FLinearColor(1.10f, 1.06f, .99f) : FLinearColor::White);
 }
 void UClassCardWidget::NativeDestruct()
 {

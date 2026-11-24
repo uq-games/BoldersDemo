@@ -1,9 +1,12 @@
 #include "Characters/Presentation/FactionRingComponent.h"
 #include "Characters/BaseCharacter.h"
+#include "Characters/StatueBoss/StatueBossCharacter.h"
+#include "Combat/Presentation/CombatGuideStyle.h"
 #include "Components/CapsuleComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "Engine/World.h"
+#include "UObject/ConstructorHelpers.h"
 
 UFactionRingComponent::UFactionRingComponent()
 {
@@ -12,6 +15,9 @@ UFactionRingComponent::UFactionRingComponent()
 	SetAbsolute(true, true, true);
 	SetVisibility(false);
 	FadeScreenSize = 0.f;
+	SetSortOrder(CombatGuideStyle::FootprintSort);
+	static const ConstructorHelpers::FObjectFinder<UMaterialInterface> Footprint(CombatGuideStyle::FootprintMaterialPath);
+	FootprintMaterial = Footprint.Object;
 }
 
 void UFactionRingComponent::BeginPlay()
@@ -25,6 +31,8 @@ void UFactionRingComponent::BeginPlay()
 	}
 	if (const auto* OwnerCharacter = Cast<ABaseCharacter>(GetOwner()))
 		AddTickPrerequisiteComponent(OwnerCharacter->GetCharacterMovement());
+	if (FootprintMaterial && GetDecalMaterial() != FootprintMaterial)
+		SetDecalMaterial(FootprintMaterial);
 	UpdateRing();
 }
 
@@ -48,7 +56,12 @@ void UFactionRingComponent::UpdateAppearance()
 	if (!RingMaterialInstance && GetDecalMaterial())
 		RingMaterialInstance = CreateDynamicMaterialInstance();
 	if (!RingMaterialInstance) return;
-	const FLinearColor Color = OwnerCharacter->GetFaction() == ECharacterFaction::Enemy ? EnemyColor : PlayerColor;
+	const bool bEnemy = OwnerCharacter->GetFaction() == ECharacterFaction::Enemy;
+	const bool bGuest = OwnerCharacter->PlayerSlot == 2;
+	const float Style = bEnemy ? 2.f : bGuest ? 1.f : 0.f;
+	FLinearColor Color = bEnemy ? EnemyColor : PlayerColor;
+	if (!bEnemy && OwnerCharacter->PlayerSlot == 1) Color = FLinearColor(.16f, .84f, 1.f);
+	else if (!bEnemy && bGuest) Color = FLinearColor(1.f, .76f, .23f);
 	const float Brightness = bLocallySelected ? SelectedBrightness : NormalBrightness;
 	if (Color != AppliedColor)
 	{
@@ -60,13 +73,19 @@ void UFactionRingComponent::UpdateAppearance()
 		RingMaterialInstance->SetScalarParameterValue(TEXT("RingBrightness"), Brightness);
 		AppliedBrightness = Brightness;
 	}
+	if (Style != AppliedStyle)
+	{
+		RingMaterialInstance->SetScalarParameterValue(TEXT("MarkStyle"), Style);
+		AppliedStyle = Style;
+	}
 }
 
 void UFactionRingComponent::UpdateRing(float DeltaTime)
 {
 	const auto* OwnerCharacter = Cast<ABaseCharacter>(GetOwner());
 	if (!OwnerCharacter || GetNetMode() == NM_DedicatedServer || !OwnerCharacter->IsAlive()
-		|| OwnerCharacter->GetFaction() == ECharacterFaction::Neutral || OwnerCharacter->IsHidden())
+		|| OwnerCharacter->GetFaction() == ECharacterFaction::Neutral || OwnerCharacter->IsHidden()
+		|| (OwnerCharacter->IsA<AStatueBossCharacter>() && !CastChecked<AStatueBossCharacter>(OwnerCharacter)->IsAwakened()))
 	{
 		SetVisibility(false);
 		CachedGround.Reset();
@@ -77,6 +96,7 @@ void UFactionRingComponent::UpdateRing(float DeltaTime)
 	if (!RingMaterialInstance) { SetVisibility(false); return; }
 	const FVector Feet = OwnerCharacter->GetActorLocation()
 		- FVector::UpVector * OwnerCharacter->GetCapsuleComponent()->GetScaledCapsuleHalfHeight();
+	const FVector Heading = OwnerCharacter->GetActorForwardVector().GetSafeNormal2D();
 	TimeSinceGroundTrace += FMath::Max(DeltaTime, 0.f);
 	const UPrimitiveComponent* GroundComponent = CachedGround.Get();
 	const UObject* MovementBaseObject = OwnerCharacter->GetMovementBaseObject();
@@ -86,12 +106,14 @@ void UFactionRingComponent::UpdateRing(float DeltaTime)
 		&& GroundComponent->GetComponentTransform().Equals(CachedGroundTransform)
 		&& (!MovementBaseObject || (MovementBase && MovementBase->Mobility == EComponentMobility::Static && !MovementBase->IsSimulatingPhysics()));
 	const bool bStationary = Feet.Equals(LastTracedFeet, 0.01f)
+		&& Heading.Equals(LastTracedHeading, .012f)
 		&& OwnerCharacter->GetVelocity().IsNearlyZero()
 		&& !OwnerCharacter->GetCharacterMovement()->IsFalling();
 	// Keep Tick and appearance updates responsive. Reuse only an unchanged static surface.
 	if (IsVisible() && bFixedGround && bStationary && TimeSinceGroundTrace < StationaryTraceInterval) return;
 	TimeSinceGroundTrace = 0.f;
 	LastTracedFeet = Feet;
+	LastTracedHeading = Heading;
 	CachedGround.Reset();
 #if WITH_DEV_AUTOMATION_TESTS
 	++GroundTraceCount;
@@ -101,18 +123,35 @@ void UFactionRingComponent::UpdateRing(float DeltaTime)
 	Objects.AddObjectTypesToQuery(ECC_WorldStatic);
 	Objects.AddObjectTypesToQuery(ECC_WorldDynamic);
 	FHitResult Ground;
-	const bool bGrounded = GetWorld()->LineTraceSingleByObjectType(Ground,
-		Feet + FVector::UpVector * TraceAboveFeet, Feet - FVector::UpVector * TraceBelowFeet, Objects, Params);
-	if (!bGrounded || Ground.bStartPenetrating || Ground.ImpactNormal.Z < 0.2f)
+	const FVector TraceStart = Feet + FVector::UpVector * TraceAboveFeet;
+	const FVector TraceEnd = Feet - FVector::UpVector * TraceBelowFeet;
+	const auto TraceSurface = [&]()
+	{
+		return GetWorld()->LineTraceSingleByObjectType(Ground, TraceStart, TraceEnd, Objects, Params)
+			&& !Ground.bStartPenetrating && Ground.ImpactNormal.Z >= .2f;
+	};
+	bool bGrounded = TraceSurface();
+	if (!bGrounded)
+	{
+		// A shallow projection can still reach visible geometry around a simple collision support.
+		Params.bTraceComplex = false;
+		bGrounded = TraceSurface();
+	}
+	if (!bGrounded)
 	{
 		SetVisibility(false);
 		return;
 	}
 	CachedGround = Ground.GetComponent();
 	if (CachedGround.IsValid()) CachedGroundTransform = CachedGround->GetComponentTransform();
-	DecalSize = FVector(ProjectionDepth, Radius, Radius);
-	// Decal local X is its projection direction. Match terrain, not actor yaw/scale.
+	const FVector Size(ProjectionDepth, Radius / CombatGuideStyle::DecalBoundary, Radius / CombatGuideStyle::DecalBoundary);
+	if (!DecalSize.Equals(Size))
+	{
+		DecalSize = Size;
+		MarkRenderStateDirty();
+	}
+	const FVector Right(-Heading.Y, Heading.X, 0.);
 	SetWorldLocationAndRotation(Ground.ImpactPoint + Ground.ImpactNormal * SurfaceOffset,
-		FRotationMatrix::MakeFromX(-Ground.ImpactNormal).Rotator());
+		FRotationMatrix::MakeFromXY(-Ground.ImpactNormal, Right).Rotator());
 	SetVisibility(true);
 }

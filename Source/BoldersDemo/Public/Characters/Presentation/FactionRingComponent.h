@@ -5,6 +5,7 @@
 #include "FactionRingComponent.generated.h"
 
 class UMaterialInstanceDynamic;
+class UMaterialInterface;
 
 // Presentation only: owns no faction/selection gameplay state and never replicates.
 UCLASS(ClassGroup=(Presentation), meta=(BlueprintSpawnableComponent))
@@ -48,14 +49,17 @@ private:
 	friend class FFactionRingTest;
 	void UpdateRing(float DeltaTime = 0.f);
 	void UpdateAppearance();
-	UPROPERTY(Transient)
-	TObjectPtr<UMaterialInstanceDynamic> RingMaterialInstance;
+	// Runtime material also supersedes the old decal on saved character Blueprints.
+	UPROPERTY() TObjectPtr<UMaterialInterface> FootprintMaterial;
+	UPROPERTY(Transient) TObjectPtr<UMaterialInstanceDynamic> RingMaterialInstance;
 	bool bLocallySelected = false;
 	FLinearColor AppliedColor = FLinearColor::Transparent;
 	float AppliedBrightness = -1.f;
+	float AppliedStyle = -1.f;
 	TWeakObjectPtr<UPrimitiveComponent> CachedGround;
 	FTransform CachedGroundTransform;
 	FVector LastTracedFeet = FVector::ZeroVector;
+	FVector LastTracedHeading = FVector::ZeroVector;
 	float TimeSinceGroundTrace = 0.f;
 #if WITH_DEV_AUTOMATION_TESTS
 	uint32 GroundTraceCount = 0;
